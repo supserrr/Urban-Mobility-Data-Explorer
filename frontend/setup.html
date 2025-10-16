@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Urban Mobility Explorer - Setup</title>
+    
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lexend+Mega:wght@700;900&family=Public+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --primary-color: #1a1a1a;
+            --secondary-color: #faf8f3;
+            --yellow: #ffe600;
+            --green: #40d39c;
+            --blue: #2c7a7b;
+            --border-thick: 4px;
+            --shadow-lg: 8px 8px 0 var(--primary-color);
+        }
+
+        body {
+            font-family: 'Public Sans', sans-serif;
+            background: var(--primary-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 2rem;
+        }
+
+        .setup-wrapper { width: 100%; max-width: 600px; }
+
+        .header {
+            background: var(--yellow);
+            border: var(--border-thick) solid var(--primary-color);
+            box-shadow: var(--shadow-lg);
+            padding: 2rem;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .header-title {
+            font-family: 'Lexend Mega', sans-serif;
+            font-size: clamp(1.5rem, 4vw, 2.5rem);
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: -0.02em;
+            line-height: 1.1;
+            margin-bottom: 0.5rem;
+        }
+
+        .header-subtitle {
+            font-family: 'Public Sans', sans-serif;
+            font-size: clamp(0.875rem, 2vw, 1rem);
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .container {
+            background: #f5f5dc;
+            border: var(--border-thick) solid var(--primary-color);
+            box-shadow: var(--shadow-lg);
+            padding: 3rem;
+            text-align: center;
+        }
+
+        .setup-icon {
+            width: 80px;
+            height: 80px;
+            background: var(--green);
+            border: var(--border-thick) solid var(--primary-color);
+            box-shadow: 4px 4px 0 var(--primary-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 2rem;
+            transition: background 0.3s ease;
+        }
+        
+        .setup-icon svg {
+            width: 50px;
+            height: 50px;
+            fill: var(--primary-color);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 24px;
+            background: var(--secondary-color);
+            border: var(--border-thick) solid var(--primary-color);
+            margin: 2rem 0;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--blue);
+            border-right: var(--border-thick) solid var(--primary-color);
+            transition: width 0.5s ease;
+            width: 0%;
+        }
+
+        .status {
+            font-family: 'Public Sans', sans-serif;
+            font-size: 1.125rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            text-transform: uppercase;
+            margin-top: 1rem;
+            letter-spacing: 0.05em;
+        }
+
+        .status.success { color: var(--green); }
+
+        .checklist {
+            text-align: left;
+            margin: 2rem 0;
+            font-size: 0.9375rem;
+        }
+
+        .checklist-item {
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            background: var(--secondary-color);
+            border: 3px solid var(--primary-color);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            animation: slideIn 0.3s ease forwards;
+            opacity: 0;
+        }
+
+        .checklist-item.complete {
+            background: var(--green);
+            color: var(--primary-color);
+        }
+
+        .check-icon { 
+            font-size: 1.25rem; 
+            font-weight: 900; 
+            width: 20px;
+            height: 20px;
+            display: inline-block;
+        }
+        
+        .check-icon svg {
+            width: 20px;
+            height: 20px;
+            vertical-align: middle;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(-100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .checklist-item:nth-child(1) { animation-delay: 0.1s; }
+        .checklist-item:nth-child(2) { animation-delay: 0.3s; }
+        .checklist-item:nth-child(3) { animation-delay: 0.5s; }
+        .checklist-item:nth-child(4) { animation-delay: 0.7s; }
+    </style>
+</head>
+<body>
+    <div class="setup-wrapper">
+        <div class="header">
+            <div class="header-title">Urban Mobility</div>
+            <div class="header-subtitle">Configuration in Progress</div>
+        </div>
+
+        <div class="container">
+            <div class="setup-icon" id="setupIcon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                    <path d="M12 15.5A3.5 3.5 0 0 1 8.5 12 3.5 3.5 0 0 1 12 8.5a3.5 3.5 0 0 1 3.5 3.5 3.5 3.5 0 0 1-3.5 3.5m7.43-2.53c.04-.32.07-.64.07-.97 0-.33-.03-.66-.07-1l2.11-1.63c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.31-.61-.22l-2.49 1c-.52-.39-1.06-.73-1.69-.98l-.37-2.65A.506.506 0 0 0 14 2h-4c-.25 0-.46.18-.5.42l-.37 2.65c-.63.25-1.17.59-1.69.98l-2.49-1c-.22-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64L4.57 11c-.04.34-.07.67-.07 1 0 .33.03.65.07.97l-2.11 1.66c-.19.15-.25.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1.01c.52.4 1.06.74 1.69.99l.37 2.65c.04.24.25.42.5.42h4c.25 0 .46-.18.5-.42l.37-2.65c.63-.26 1.17-.59 1.69-.99l2.49 1.01c.22.08.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.66z"/>
+                </svg>
+            </div>
+            
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressBar"></div>
+            </div>
+            
+            <div class="status" id="status">Initializing...</div>
+            
+            <div class="checklist">
+                <div class="checklist-item" id="check1">
+                    <span class="check-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2" fill="none"/>
+                        </svg>
+                    </span>
+                    <span>Loading configuration</span>
+                </div>
+                <div class="checklist-item" id="check2">
+                    <span class="check-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2" fill="none"/>
+                        </svg>
+                    </span>
+                    <span>Saving API key</span>
+                </div>
+                <div class="checklist-item" id="check3">
+                    <span class="check-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2" fill="none"/>
+                        </svg>
+                    </span>
+                    <span>Verifying authentication</span>
+                </div>
+                <div class="checklist-item" id="check4">
+                    <span class="check-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                            <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2" fill="none"/>
+                        </svg>
+                    </span>
+                    <span>Ready to launch</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        (function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const status = document.getElementById("status");
+            const progressBar = document.getElementById("progressBar");
+            const setupIcon = document.getElementById("setupIcon");
+            
+            let apiKey = null;
+            let currentStep = 0;
+            
+            /**
+             * Clear all localStorage data for fresh start
+             */
+            function clearLocalStorage() {
+                console.log('Clearing localStorage for fresh setup...');
+                localStorage.clear();
+            }
+            
+            /**
+             * Fetch API key from backend
+             */
+            async function fetchApiKeyFromBackend() {
+                try {
+                    const response = await fetch('http://localhost:8000/api/health');
+                    if (response.ok) {
+                        // Backend is running, try to get API key from URL or use backend default
+                        return urlParams.get("api_key");
+                    }
+                } catch (error) {
+                    console.error('Backend not available:', error);
+                }
+                return urlParams.get("api_key");
+            }
+            
+            /**
+             * Verify API key works with backend
+             */
+            async function verifyApiKey(key) {
+                try {
+                    const response = await fetch('http://localhost:8000/api/config', {
+                        headers: {
+                            'X-API-Key': key,
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    return response.ok;
+                } catch (error) {
+                    console.error('Verification failed:', error);
+                    return false;
+                }
+            }
+            
+            /**
+             * Complete a setup step
+             */
+            function completeStep(stepId) {
+                const element = document.getElementById(stepId);
+                element.classList.add('complete');
+                
+                const checkIcon = element.querySelector('.check-icon');
+                checkIcon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>';
+                
+                currentStep++;
+                progressBar.style.width = (currentStep / 4 * 100) + '%';
+            }
+            
+            /**
+             * Run automated setup
+             */
+            async function runSetup() {
+                status.textContent = "Configuring your application...";
+                
+                // Step 1: Clear localStorage
+                setTimeout(() => {
+                    clearLocalStorage();
+                    completeStep('check1');
+                }, 200);
+                
+                // Step 2: Get and save API key
+                setTimeout(async () => {
+                    apiKey = await fetchApiKeyFromBackend();
+                    
+                    if (apiKey) {
+                        localStorage.setItem("api_key", apiKey);
+                        console.log('API key saved to localStorage');
+                        completeStep('check2');
+                        
+                        // Step 3: Verify authentication
+                        setTimeout(async () => {
+                            const isValid = await verifyApiKey(apiKey);
+                            
+                            if (isValid) {
+                                console.log('API key verified successfully');
+                                completeStep('check3');
+                                
+                                // Step 4: Complete setup
+                                setTimeout(() => {
+                                    completeStep('check4');
+                                    
+                                    setTimeout(() => {
+                                        status.textContent = "Setup Complete!";
+                                        status.className = "status success";
+                                        setupIcon.style.background = "#40d39c";
+                                        setupIcon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>';
+                                        
+                                        setTimeout(() => {
+                                            status.textContent = "Launching dashboard...";
+                                            setTimeout(() => {
+                                                window.location.href = "/index.html";
+                                            }, 500);
+                                        }, 1000);
+                                    }, 300);
+                                }, 500);
+                            } else {
+                                status.textContent = "Authentication failed - check backend";
+                                status.style.color = "#ff4444";
+                            }
+                        }, 500);
+                    } else {
+                        status.textContent = "No API key provided";
+                        status.style.color = "#ff4444";
+                    }
+                }, 500);
+            }
+            
+            // Start setup after brief delay
+            setTimeout(runSetup, 300);
+        })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,5040 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Urban Mobility Explorer</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Lexend+Mega:wght@700;900&family=Public+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/matifandy8/NeoBrutalismCSS/dist/index.min.css">
+    <script src="config.js"></script>
+    <script src="https://unpkg.com/h3-js@4.1.0/dist/h3-js.umd.js"></script>
+    <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
+    <script src="https://unpkg.com/deck.gl@latest/dist.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="utils/logger.js"></script>
+    <script src="utils/api.js"></script>
+    <script src="components/CustomAlgorithmView.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            /* Core 4-Color Palette */
+            --primary-color: #1a1a1a;         /* Black - text, borders, structure */
+            --secondary-color: #faf8f3;        /* Light cream - backgrounds, clean space */
+            
+            /* Semantic 4-Color System */
+            --color-data: #2c7a7b;             /* Teal - Data & Analytics */
+            --color-location: #c97064;         /* Muted Terracotta - Location & Geography */
+            --color-time: #d4a574;             /* Muted Gold - Time & Temporal */
+            --color-performance: #6b5b95;      /* Muted Purple - Performance & Success */
+            
+            /* Color Applications */
+            --text-primary: #1a1a1a;
+            --text-secondary: #666666;
+            --bg-primary: #ffffff;
+            --bg-secondary: #f8f9fa;
+            
+            /* Legacy mappings */
+            --blue: #2c7a7b;
+            --orange: #c97064;
+            --green: #6b5b95;
+            --yellow: #d4a574;
+        }
+
+        body {
+            font-family: 'Public Sans', sans-serif;
+            line-height: 1.6;
+            color: var(--primary-color);
+            background: #1a1a1a;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: clamp(1rem, 4vw, 2rem);
+            width: 100%;
+        }
+
+        .main-container-wrapper {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: #f5f5dc;
+            border: 4px solid var(--primary-color);
+            box-shadow: 8px 8px 0 var(--color-data);
+            padding: 0;
+        }
+
+        @media (min-width: 1920px) {
+            .container {
+                max-width: 1600px;
+            }
+
+            .main-container-wrapper {
+                max-width: 1600px;
+            }
+
+            /* Navbar - Large screens */
+            .navbar .container > div {
+                padding: 1.25rem 2rem;
+                gap: 1.5rem;
+            }
+
+            .navbar-nav {
+                gap: 2rem;
+            }
+
+            .nav-link {
+                padding: 0.625rem 1rem;
+                font-size: 1rem;
+            }
+        }
+
+        /* Large screens (1200px and above) */
+        @media (min-width: 1200px) {
+            .navbar .container > div {
+                padding: 1.125rem 1.75rem;
+                gap: 1.25rem;
+            }
+
+            .navbar-nav {
+                gap: 1.75rem;
+            }
+
+            .nav-link {
+                padding: 0.5rem 0.875rem;
+                font-size: 0.9375rem;
+            }
+        }
+
+        /* Medium-large screens (1024px - 1199px) */
+        @media (max-width: 1199px) and (min-width: 1024px) {
+            .navbar .container > div {
+                padding: 1rem 1.5rem;
+                gap: 1rem;
+            }
+
+            .navbar-nav {
+                gap: 1.5rem;
+            }
+
+            .nav-link {
+                padding: 0.5rem 0.75rem;
+                font-size: 0.875rem;
+            }
+        }
+
+        /* Medium screens (768px - 1023px) */
+        @media (max-width: 1023px) and (min-width: 768px) {
+            .navbar .container > div {
+                padding: 0.875rem 1.25rem;
+                gap: 0.75rem;
+            }
+
+            .navbar-nav {
+                gap: 1.25rem;
+            }
+
+            .nav-link {
+                padding: 0.5rem 0.625rem;
+                font-size: 0.8rem;
+            }
+
+            /* Start showing icons more prominently */
+            .nav-text {
+                display: block;
+            }
+        }
+
+        header {
+            padding: 1.5rem 0;
+            position: relative;
+        }
+
+        header .container {
+            text-align: center;
+        }
+
+        header .container > div {
+            background: var(--color-data);
+            color: var(--secondary-color);
+            border: 4px solid var(--primary-color);
+            box-shadow: 6px 6px 0 var(--primary-color);
+            padding: 2rem 1.5rem;
+            display: block;
+        }
+
+        h1 {
+            font-family: 'Lexend Mega', sans-serif;
+            font-size: 2.75rem;
+            font-weight: 900;
+            margin-bottom: 0.75rem;
+            letter-spacing: -0.02em;
+            text-transform: uppercase;
+        }
+
+        .subtitle {
+            font-family: 'Public Sans', sans-serif;
+            font-size: 1.25rem;
+            font-weight: 600;
+            line-height: 1.6;
+            text-transform: uppercase;
+            color: var(--secondary-color);
+        }
+
+        /* Navbar */
+        .navbar {
+            position: sticky;
+            top: 0;
+            z-index: 10000;
+            padding: 0.75rem 0;
+            overflow: hidden;
+            width: 100%;
+        }
+
+        .navbar .container {
+            display: block;
+            width: 100%;
+            max-width: 100%;
+            overflow: hidden;
+        }
+
+        .navbar .container > div {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--primary-color);
+            border: 4px solid var(--primary-color);
+            box-shadow: 6px 6px 0 var(--primary-color);
+            padding: 1rem 1.5rem;
+            flex-wrap: nowrap;
+            gap: 1rem;
+            width: 100%;
+            min-width: 0;
+            overflow: hidden;
+        }
+
+        .navbar-brand {
+            font-family: 'Lexend Mega', sans-serif;
+            font-size: clamp(1rem, 2.5vw, 1.25rem);
+            font-weight: 900;
+            color: var(--secondary-color);
+            text-transform: uppercase;
+            white-space: nowrap;
+            flex-shrink: 1;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .brand-logo {
+            font-size: 1.4em;
+            color: var(--color-data);
+            flex-shrink: 0;
+            font-weight: 900;
+            text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.3);
+            overflow: visible;
+            white-space: nowrap;
+        }
+
+        .brand-text {
+            flex-shrink: 1;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .navbar-nav {
+            display: flex;
+            gap: 1.5rem;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+            flex-wrap: nowrap;
+            min-width: 0;
+            flex-shrink: 2;
+            overflow: hidden;
+        }
+
+        .nav-link {
+            font-family: 'Public Sans', sans-serif;
+            color: var(--secondary-color);
+            font-weight: 700;
+            text-transform: uppercase;
+            text-decoration: none;
+            font-size: clamp(0.75rem, 1.5vw, 0.9375rem);
+            font-weight: 700;
+            padding: 0.5rem 0.75rem;
+            border: 2px solid transparent;
+            transition: all 0.15s cubic-bezier(0.77, 0, 0.18, 1);
+            white-space: nowrap;
+            min-width: fit-content;
+            flex-shrink: 1;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: flex;
+            align-items: center;
+            gap: 0.375rem;
+        }
+
+        .nav-icon {
+            font-size: 1.3em;
+            color: var(--color-data);
+            flex-shrink: 0;
+            font-weight: 900;
+            text-shadow: 1px 1px 0 rgba(0, 0, 0, 0.3);
+        }
+
+        .nav-text {
+            flex-shrink: 1;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .nav-link:hover {
+            color: var(--secondary-color);
+            background: var(--color-data);
+            border-color: var(--primary-color);
+            box-shadow: 3px 3px 0 var(--primary-color);
+            transform: translate(-2px, -2px);
+        }
+
+        .nav-link:hover .nav-icon {
+            color: var(--secondary-color);
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.8);
+            filter: drop-shadow(0px 0px 3px rgba(255, 255, 255, 0.5));
+        }
+
+        html {
+            scroll-behavior: smooth;
+            scroll-padding-top: 80px;
+        }
+
+        .hero-stats {
+            display: flex;
+            gap: 2rem;
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .hero-stat {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .hero-stat i {
+            font-size: 1.25rem;
+            opacity: 0.8;
+        }
+
+        .hero-stat span {
+            font-size: 0.9375rem;
+            opacity: 0.9;
+        }
+
+        .map-section {
+            margin-top: 2rem;
+            background: var(--secondary-color);
+            padding: 2rem;
+            border: 4px solid var(--primary-color);
+            box-shadow: 8px 8px 0 var(--primary-color);
+        }
+
+        /* Section Styles */
+        .section {
+            padding: 3rem 0;
+        }
+
+        /* Quick Stats Section - Reduced bottom padding */
+        #quick-stats {
+            padding: 3rem 0 0.5rem 0;
+        }
+
+        .section-title {
+            font-family: 'Lexend Mega', sans-serif;
+            font-size: 1.75rem;
+            font-weight: 900;
+            margin-bottom: 2.5rem;
+            color: var(--secondary-color);
+            background: var(--color-performance);
+            padding: 1rem 1.5rem;
+            display: block;
+            border: 4px solid var(--primary-color);
+            box-shadow: 6px 6px 0 var(--primary-color);
+            text-align: center;
+            text-transform: uppercase;
+        }
+
+        .section-subtitle {
+            font-family: 'Public Sans', sans-serif;
+            color: var(--primary-color);
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 2rem;
+            text-transform: uppercase;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--secondary-color);
+            padding: 2rem;
+            border: 4px solid var(--primary-color);
+            box-shadow: 8px 8px 0 var(--primary-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            transition: all 0.15s cubic-bezier(0.77, 0, 0.18, 1);
+        }
+
+        .stat-card:hover {
+            transform: translate(-4px, -4px);
+            box-shadow: 12px 12px 0 var(--primary-color);
+        }
+
+        .stat-icon {
+            width: 70px;
+            height: 70px;
+            background: var(--blue);
+            border: 4px solid var(--primary-color);
+            box-shadow: 4px 4px 0 var(--primary-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1rem;
+        }
+
+        .stat-icon i {
+            font-size: 1.75rem;
+            color: var(--secondary-color);
+        }
+
+        .stat-card h3 {
+            font-family: 'Public Sans', sans-serif;
+            font-size: 0.875rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .stat-value {
+            font-family: 'Lexend Mega', sans-serif;
+            font-size: 2rem;
+            font-weight: 900;
+            color: var(--primary-color);
+            margin: 0;
+        }
+
+        /* Charts Grid */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+        }
+
+        .chart-container {
+            background: var(--secondary-color);
+            padding: 2rem;
+            border: 4px solid var(--primary-color);
+            box-shadow: 8px 8px 0 var(--primary-color);
+            transition: all 0.15s cubic-bezier(0.77, 0, 0.18, 1);
+        }
+
+        .chart-container:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: 10px 10px 0 var(--primary-color);
+        }
+
+        .chart-header {
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 3px solid var(--primary-color);
+        }
+
+        .chart-header h3 {
+            font-family: 'Lexend Mega', sans-serif;
+            font-size: 1.25rem;
+            font-weight: 900;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+        }
+
+        .chart-description {
+            font-family: 'Public Sans', sans-serif;
+            color: var(--primary-color);
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin: 0;
+            text-transform: uppercase;
+        }
+
+        .chart-canvas {
+            height: 350px;
+            position: relative;
+        }
+
+        .chart-canvas canvas {
+            max-height: 100%;
+            border: 2px solid var(--primary-color);
+            box-shadow: 4px 4px 0 var(--primary-color);
+        }
+
+        .map-wrapper {
+            position: relative;
+            width: 100%;
+            height: 700px;
+            overflow: hidden;
+            border: 4px solid var(--primary-color);
+            box-shadow: 8px 8px 0 var(--primary-color);
+            background: #1a1a1a;
+        }
+
+        #main-map {
+            width: 100%;
+            height: 100%;
+        }
+
+        .map-controls {
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+            z-index: 1000;
+            background: var(--secondary-color);
+            padding: 1rem;
+            border: 3px solid var(--primary-color);
+            box-shadow: 6px 6px 0 var(--primary-color);
+            min-width: 200px;
+        }
+
+        .control-group {
+            margin-bottom: 1rem;
+        }
+
+        .control-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .control-label {
+            font-family: 'Public Sans', sans-serif;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            display: block;
+        }
+
+        .control-buttons {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .map-btn {
+            font-family: 'Public Sans', sans-serif;
+            padding: 0.5rem 1rem;
+            border: 3px solid var(--primary-color);
+            background: var(--secondary-color);
+            cursor: pointer;
+            transition: all 0.15s cubic-bezier(0.77, 0, 0.18, 1);
+            font-size: 0.875rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            box-shadow: 3px 3px 0 var(--primary-color);
+            text-transform: uppercase;
+        }
+
+        .map-btn:hover {
+            background: var(--yellow);
+            transform: translate(-2px, -2px);
+            box-shadow: 5px 5px 0 var(--primary-color);
+        }
+
+        .map-btn.active {
+            background: var(--primary-color);
+            color: var(--secondary-color);
+            box-shadow: 3px 3px 0 var(--primary-color);
+        }
+
+        .btn-full {
+            width: 100%;
+        }
+
+        .trip-info-panel {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 350px;
+            max-height: 80vh;
+            background: var(--secondary-color);
+            border: 4px solid var(--primary-color);
+            box-shadow: 8px 8px 0 var(--primary-color);
+            padding: 20px;
+            overflow-y: auto;
+            z-index: 1001;
+        }
+
+        .trip-info-panel h3 {
+            font-family: 'Lexend Mega', sans-serif;
+            margin: 0 0 1rem 0;
+            font-size: 1.25rem;
+            font-weight: 900;
+            color: var(--primary-color);
+            text-transform: uppercase;
+        }
+
+        .trip-detail-section {
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 3px solid var(--primary-color);
+        }
+
+        .trip-detail-section:last-child {
+            border-bottom: none;
+        }
+
+        .trip-detail-section h4 {
+            font-family: 'Public Sans', sans-serif;
+            font-size: 1rem;
+            font-weight: 700;
+            margin: 0 0 0.5rem 0;
+            color: var(--primary-color);
+            text-transform: uppercase;
+        }
+
+        .trip-detail-section p {
+            font-family: 'Public Sans', sans-serif;
+            margin: 0.25rem 0;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .btn-close-panel {
+            font-family: 'Lexend Mega', sans-serif;
+            background: var(--blue);
+            border: 3px solid var(--primary-color);
+            box-shadow: 4px 4px 0 var(--primary-color);
+            color: var(--secondary-color);
+            padding: 0.75rem 1.5rem;
+            cursor: pointer;
+            font-weight: 900;
+            text-transform: uppercase;
+            width: 100%;
+            margin-top: 1rem;
+            transition: all 0.15s cubic-bezier(0.77, 0, 0.18, 1);
+        }
+
+        .btn-close-panel:hover {
+            transform: translate(-3px, -3px);
+            box-shadow: 7px 7px 0 var(--primary-color);
+            background: var(--green);
+            color: var(--secondary-color);
+        }
+
+        .info-message {
+            background: var(--yellow);
+            border: 3px solid var(--primary-color);
+            box-shadow: 4px 4px 0 var(--primary-color);
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+
+        .info-message p {
+            margin: 0;
+            font-family: 'Public Sans', sans-serif;
+            font-size: 0.875rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            text-transform: uppercase;
+        }
+
+        footer {
+            padding: 2rem 0;
+            margin-top: 3rem;
+        }
+
+        footer .container > div {
+            background: var(--primary-color);
+            color: var(--secondary-color);
+            text-align: center;
+            border: 4px solid var(--primary-color);
+            box-shadow: 6px 6px 0 var(--primary-color);
+            padding: 1rem 1.5rem;
+            display: block;
+        }
+
+        .footer-bottom {
+            text-align: center;
+        }
+
+        .footer-bottom p {
+            color: var(--secondary-color);
+            font-size: 0.875rem;
+            margin: 0;
+        }
+
+        /* Urban Mobility Insights Explorer Styles */
+        .insights-explorer {
+            background: var(--secondary-color);
+            border: 4px solid var(--primary-color);
+            border-radius: 0;
+            padding: 2rem;
+            box-shadow: 8px 8px 0 var(--primary-color);
+        }
+
+        .custom-algorithm-section {
+            background: var(--secondary-color);
+            border: 4px solid var(--primary-color);
+            border-radius: 0;
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+
+        .section-header h2 {
+            font-family: 'Lexend Mega', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 900;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .section-subtitle {
+            font-size: 1.2rem;
+            color: #666;
+            margin-bottom: 1.5rem;
+        }
+
+        .algorithm-badge {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .badge {
+            background: var(--yellow);
+            color: var(--primary-color);
+            padding: 0.5rem 1rem;
+            border: 2px solid var(--primary-color);
+            border-radius: 0;
+            font-weight: 700;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .algorithm-controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            background: #f8f9fa;
+            border: 3px solid var(--primary-color);
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .control-group label {
+            font-weight: 700;
+            color: var(--primary-color);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .control-group select,
+        .control-group input {
+            padding: 0.75rem;
+            border: 2px solid var(--primary-color);
+            border-radius: 0;
+            font-family: 'Public Sans', sans-serif;
+            font-weight: 600;
+            background: var(--secondary-color);
+        }
+
+        .control-group input[type="range"] {
+            width: 100%;
+        }
+
+        .btn {
+            padding: 1rem 2rem;
+            background: var(--blue);
+            color: var(--secondary-color);
+            border: 3px solid var(--primary-color);
+            border-radius: 0;
+            font-family: 'Lexend Mega', sans-serif;
+            font-weight: 900;
+            font-size: 1.1rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 4px 4px 0 var(--primary-color);
+        }
+
+        .btn:hover {
+            background: var(--primary-color);
+            color: var(--secondary-color);
+            transform: translate(-2px, -2px);
+            box-shadow: 6px 6px 0 var(--primary-color);
+        }
+
+        .btn:disabled {
+            background: #ccc;
+            color: #666;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: 2px 2px 0 var(--primary-color);
+        }
+
+        .algorithm-results {
+            margin-top: 2rem;
+        }
+
+        .results-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 3px solid var(--primary-color);
+        }
+
+        .results-header h3 {
+            font-family: 'Lexend Mega', sans-serif;
+            font-size: 1.8rem;
+            font-weight: 900;
+            color: var(--primary-color);
+            text-transform: uppercase;
+        }
+
+        .status-indicator {
+            padding: 0.5rem 1rem;
+            border: 2px solid var(--primary-color);
+            border-radius: 0;
+            background: var(--secondary-color);
+        }
+
+        .status-text {
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .status-text.success {
+            color: var(--success-color);
+        }
+
+        .status-text.error {
+            color: var(--error-color);
+        }
+
+        /* Urban Insights Specific Styles */
+        .explorer-header {
+            text-align: center;
+            margin-bottom: 2rem;
+            background: var(--color-performance);
+            padding: 2rem 1.5rem;
+            border: 4px solid var(--primary-color);
+            box-shadow: 6px 6px 0 var(--primary-color);
+            display: block;
+        }
+
+        .explorer-header h2 {
+            font-family: 'Lexend Mega', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 900;
+            color: var(--secondary-color);
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .explorer-subtitle {
+            font-size: 1rem;
+            color: var(--secondary-color);
+            margin-bottom: 1.5rem;
+            font-weight: 600;
+        }
+
+        .insight-badges {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .insight-badge {
+            background: var(--blue);
+            color: var(--secondary-color);
+            padding: 0.7rem 1.5rem;
+            border: 2px solid var(--primary-color);
+            font-size: 0.9rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 3px 3px 0 var(--primary-color);
+        }
+
+        .analysis-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            background: var(--secondary-color);
+            border: 4px solid var(--primary-color);
+            box-shadow: 6px 6px 0 var(--primary-color);
+            text-align: center;
+        }
+
+        #dynamic-controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .insight-btn {
+            padding: 1rem 2rem;
+            background: var(--blue);
+            color: var(--secondary-color);
+            border: 3px solid var(--primary-color);
+            border-radius: 0;
+            font-family: 'Lexend Mega', sans-serif;
+            font-weight: 900;
+            font-size: 1.1rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 4px 4px 0 var(--primary-color);
+            grid-column: 1 / -1;
+        }
+
+        .insight-btn:hover {
+            background: var(--primary-color);
+            color: var(--secondary-color);
+            transform: translate(-2px, -2px);
+            box-shadow: 6px 6px 0 var(--primary-color);
+        }
+
+        .insight-btn:disabled {
+            background: #ccc;
+            color: #666;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: 2px 2px 0 var(--primary-color);
+        }
+
+        .insights-results {
+            background: var(--secondary-color);
+            color: var(--primary-color);
+            padding: 2rem;
+            border: 4px solid var(--primary-color);
+            margin-top: 2rem;
+            box-shadow: 6px 6px 0 var(--primary-color);
+        }
+
+        .insights-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2.5rem;
+            padding: 1.5rem;
+            background: var(--color-data);
+            border: 4px solid var(--primary-color);
+            box-shadow: 6px 6px 0 var(--primary-color);
+        }
+
+        .insights-header h3 {
+            font-family: 'Lexend Mega', sans-serif;
+            font-size: 2rem;
+            color: var(--secondary-color);
+            margin: 0;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .analysis-status {
+            padding: 0.8rem 1.5rem;
+            border: 3px solid var(--secondary-color);
+            font-weight: 700;
+            font-size: 0.9rem;
+            background: var(--secondary-color);
+            color: var(--primary-color);
+            box-shadow: 3px 3px 0 var(--secondary-color);
+        }
+
+        .summary-section {
+            margin-bottom: 2rem;
+        }
+
+        .summary-section h4 {
+            font-family: 'Lexend Mega', sans-serif;
+            color: var(--primary-color);
+            margin-bottom: 1.5rem;
+            font-size: 1.5rem;
+            font-weight: 900;
+            text-transform: uppercase;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+            width: 100%;
+            overflow: hidden;
+        }
+
+        /* Responsive adjustments for summary cards */
+        @media (max-width: 768px) {
+            .summary-grid {
+                grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+                gap: 1rem;
+            }
+            
+            .summary-card {
+                padding: 1.5rem;
+                min-height: 160px;
+            }
+            
+            .summary-value {
+                font-size: 2rem;
+            }
+            
+            .summary-label {
+                font-size: 0.75rem;
+            }
+            
+            .summary-detail {
+                font-size: 0.7rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .summary-grid {
+                grid-template-columns: 1fr;
+                gap: 0.8rem;
+            }
+            
+            .summary-card {
+                padding: 1.2rem;
+                min-height: 140px;
+            }
+            
+            .summary-value {
+                font-size: 1.8rem;
+            }
+        }
+
+        .summary-card {
+            padding: 2rem;
+            text-align: center;
+            border: 4px solid var(--primary-color);
+            background: var(--secondary-color);
+            box-shadow: 6px 6px 0 var(--primary-color);
+            transition: all 0.2s ease;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            hyphens: auto;
+            min-height: 180px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .summary-card {
+            background: #d4e7d7;
+        }
+
+        .summary-card .summary-label,
+        .summary-card .summary-value,
+        .summary-card .summary-detail {
+            color: var(--primary-color);
+        }
+
+        .summary-card:hover {
+            transform: translate(-3px, -3px);
+            box-shadow: 9px 9px 0 var(--primary-color);
+        }
+
+        .summary-label {
+            font-size: 0.85rem;
+            margin-bottom: 1rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #666;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            hyphens: auto;
+            line-height: 1.2;
+        }
+
+        .summary-value {
+            font-size: 2.5rem;
+            font-weight: 900;
+            font-family: 'Lexend Mega', sans-serif;
+            color: var(--primary-color);
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            hyphens: auto;
+            line-height: 1.1;
+            margin: 0.5rem 0;
+        }
+
+        .summary-detail {
+            font-size: 0.75rem;
+            margin-top: 0.5rem;
+            color: #999;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            hyphens: auto;
+            line-height: 1.3;
+        }
+
+        .pattern-analysis {
+            background: #f8f9fa;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 3px solid var(--primary-color);
+        }
+
+        .pattern-analysis h4 {
+            font-family: 'Lexend Mega', sans-serif;
+            color: var(--primary-color);
+            margin-bottom: 1.5rem;
+            font-size: 1.5rem;
+            font-weight: 900;
+            text-transform: uppercase;
+        }
+
+        .pattern-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .pattern-item {
+            background: var(--secondary-color);
+            padding: 1.5rem;
+            border: 3px solid var(--primary-color);
+            box-shadow: 4px 4px 0 var(--primary-color);
+            transition: all 0.2s ease;
+        }
+
+        .pattern-item:hover {
+            transform: translate(-2px, -2px);
+            box-shadow: 6px 6px 0 var(--primary-color);
+        }
+
+        .pattern-title {
+            font-weight: 900;
+            color: var(--primary-color);
+            margin-bottom: 0.8rem;
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .pattern-description {
+            color: #666;
+            line-height: 1.6;
+            font-weight: 600;
+        }
+
+        .insights-table-section h4 {
+            font-family: 'Lexend Mega', sans-serif;
+            color: var(--primary-color);
+            margin-bottom: 1.5rem;
+            font-size: 1.5rem;
+            font-weight: 900;
+            text-transform: uppercase;
+        }
+
+        .insights-table {
+            background: var(--secondary-color);
+            border: 4px solid var(--primary-color);
+            overflow: hidden;
+            box-shadow: 6px 6px 0 var(--primary-color);
+        }
+
+        .table-header {
+            background: var(--primary-color);
+            color: var(--secondary-color);
+            font-weight: 900;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 4px solid var(--primary-color);
+        }
+
+        .table-header > div {
+            padding: 1.2rem 1rem;
+            border-right: 2px solid rgba(255, 255, 255, 0.2);
+            text-align: center;
+        }
+
+        .table-header > div:last-child {
+            border-right: none;
+        }
+
+        .table-body {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .table-row {
+            border-bottom: 3px solid #e0e0e0;
+            transition: all 0.2s ease;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .table-row > div {
+            padding: 1.2rem 1rem;
+            text-align: center;
+        }
+
+        .table-row:hover {
+            background: var(--yellow);
+            transform: translateX(2px);
+        }
+
+        .table-row:last-child {
+            border-bottom: none;
+        }
+
+        /* Peak Hours Table */
+        .peak-hours-header,
+        .peak-hours-table .table-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+        }
+
+        .status-peak {
+            color: var(--error-color);
+            font-weight: 900;
+        }
+
+        .status-busy {
+            color: var(--blue);
+            font-weight: 700;
+        }
+
+        .status-normal {
+            color: #666;
+        }
+
+        /* Distance Table */
+        .distance-header,
+        .distance-table .table-row {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+        }
+
+
+        /* Vendor Table */
+        .vendor-header,
+        .vendor-table .table-row {
+            display: grid;
+            grid-template-columns: 0.5fr 2fr 1.5fr 1fr 1.5fr 1.5fr;
+        }
+
+        .rank-first {
+            background: var(--blue);
+            color: var(--secondary-color);
+            font-weight: 900;
+        }
+
+        .rank-second {
+            background: var(--green);
+            color: var(--secondary-color);
+            font-weight: 900;
+        }
+
+        /* Quality Table */
+        .quality-header,
+        .quality-table .table-row {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+        }
+
+        .status-excellent {
+            color: var(--green);
+            font-weight: 900;
+        }
+
+        .status-good {
+            color: var(--blue);
+            font-weight: 700;
+        }
+
+        .status-fair {
+            color: #f39c12;
+            font-weight: 700;
+        }
+
+        .status-poor {
+            color: var(--error-color);
+            font-weight: 900;
+        }
+
+        /* Temporal Table */
+        .temporal-header,
+        .temporal-table .table-row {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+        }
+
+        /* Geographic Table */
+        .geographic-header,
+        .geographic-table .table-row {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+        }
+
+        /* Passenger Table */
+        .passenger-header,
+        .passenger-table .table-row {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+        }
+
+        /* Speed Table */
+        .speed-header,
+        .speed-table .table-row {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+        }
+
+        /* Weekend Table */
+        .weekend-header,
+        .weekend-table .table-row {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+        }
+
+        /* Suburban Table */
+        .suburban-header,
+        .suburban-table .table-row {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+        }
+
+        /* Flow status styles */
+        .flow-positive {
+            color: var(--green);
+            font-weight: 900;
+        }
+
+        .flow-negative {
+            color: var(--red);
+            font-weight: 900;
+        }
+
+        .flow-neutral {
+            color: var(--primary-color);
+            font-weight: 900;
+        }
+
+        /* Efficiency styles */
+        .efficiency-high {
+            color: var(--green);
+            font-weight: 900;
+        }
+
+        .efficiency-medium {
+            color: var(--orange);
+            font-weight: 900;
+        }
+
+        .efficiency-low {
+            color: var(--red);
+            font-weight: 900;
+        }
+
+        .efficiency-medium {
+            color: var(--blue);
+        }
+
+        .efficiency-low {
+            color: var(--red);
+        }
+
+        .no-data {
+            text-align: center;
+            padding: 3rem;
+            color: #666;
+            font-style: italic;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .metric-card {
+            background: var(--secondary-color);
+            border: 3px solid var(--primary-color);
+            border-radius: 0;
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: 4px 4px 0 var(--primary-color);
+        }
+
+        .metric-label {
+            font-weight: 700;
+            color: #666;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-value {
+            font-family: 'Lexend Mega', sans-serif;
+            font-size: 2rem;
+            font-weight: 900;
+            color: var(--primary-color);
+        }
+
+        .performance-metrics {
+            background: #f8f9fa;
+            border: 3px solid var(--primary-color);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .performance-metrics h4 {
+            font-family: 'Lexend Mega', sans-serif;
+            font-size: 1.3rem;
+            font-weight: 900;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+        }
+
+        .metrics-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .metric-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            background: var(--secondary-color);
+            border: 2px solid var(--primary-color);
+        }
+
+        .metric-name {
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .algorithm-details {
+            background: var(--secondary-color);
+            border: 3px solid var(--primary-color);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .algorithm-details h4 {
+            font-family: 'Lexend Mega', sans-serif;
+            font-size: 1.3rem;
+            font-weight: 900;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+        }
+
+        .detail-grid {
+            display: grid;
+            gap: 1rem;
+        }
+
+        .detail-item {
+            padding: 1rem;
+            background: #f8f9fa;
+            border: 2px solid var(--primary-color);
+        }
+
+        .detail-item strong {
+            display: block;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .detail-item span {
+            display: block;
+            font-weight: 600;
+            color: var(--blue);
+            margin-bottom: 0.25rem;
+        }
+
+        .detail-item small {
+            color: #666;
+            font-style: italic;
+        }
+
+        .sample-results {
+            background: var(--secondary-color);
+            border: 3px solid var(--primary-color);
+            padding: 1.5rem;
+        }
+
+        .sample-results h4 {
+            font-family: 'Lexend Mega', sans-serif;
+            font-size: 1.3rem;
+            font-weight: 900;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+        }
+
+        .results-table {
+            border: 2px solid var(--primary-color);
+        }
+
+        @media (max-width: 768px) {
+            .hero-stats {
+                flex-direction: column;
+                gap: 1rem;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .map-wrapper {
+                height: 500px;
+            }
+
+            .map-controls {
+                position: static;
+                margin-bottom: 1rem;
+            }
+
+            .trip-info-panel {
+                position: static;
+                width: 100%;
+                margin-top: 1rem;
+                max-height: none;
+            }
+        }
+
+        /* Map Container */
+        .map-container {
+            background: var(--secondary-color);
+            padding: 2rem;
+            border: 4px solid var(--primary-color);
+            box-shadow: 8px 8px 0 var(--primary-color);
+        }
+
+        /* Map Content Wrapper */
+        .map-content-wrapper {
+            display: flex;
+            gap: 1.5rem;
+            position: relative;
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Sidebar - Fixed Height Layout + Improved Collapsed Button v4 */
+        .map-sidebar {
+            width: 360px;
+            height: 700px;
+            background: var(--secondary-color);
+            border: 4px solid var(--primary-color);
+            box-shadow: 8px 8px 0 var(--primary-color);
+            transition: all 0.15s cubic-bezier(0.77, 0, 0.18, 1);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .map-sidebar.collapsed {
+            width: 80px;
+        }
+
+        .map-sidebar.collapsed .sidebar-content {
+            display: none;
+        }
+
+        .map-sidebar.collapsed .sidebar-title {
+            display: none;
+        }
+
+        .map-sidebar.collapsed .sidebar-header {
+            justify-content: center;
+            align-items: flex-start;
+            padding: 2rem 1rem;
+            background: var(--orange);
+        }
+
+        .map-sidebar.collapsed .sidebar-toggle {
+            position: static;
+            background: var(--primary-color);
+            color: var(--secondary-color);
+            border: 3px solid var(--primary-color);
+            padding: 1rem;
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 4px 4px 0 var(--primary-color);
+        }
+
+        .map-sidebar.collapsed .sidebar-toggle:hover {
+            background: var(--yellow);
+            color: var(--primary-color);
+            transform: translate(-2px, -2px);
+            box-shadow: 6px 6px 0 var(--primary-color);
+        }
+
+        .map-sidebar.collapsed .sidebar-toggle i {
+            transform: rotate(180deg);
+            font-size: 1.125rem;
+        }
+
+        .sidebar-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1.5rem 2rem;
+            background: var(--orange);
+            border-bottom: 4px solid var(--primary-color);
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .sidebar-title {
+            font-family: 'Lexend Mega', sans-serif;
+            font-size: 1.125rem;
+            font-weight: 900;
+            color: var(--primary-color);
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            position: relative;
+            text-transform: uppercase;
+            z-index: 1;
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            letter-spacing: -0.025em;
+        }
+
+        .sidebar-title i {
+            font-size: 1.125rem;
+            opacity: 0.9;
+        }
+
+        .sidebar-toggle {
+            background: var(--primary-color);
+            border: 3px solid var(--primary-color);
+            color: var(--secondary-color);
+            cursor: pointer;
+            padding: 0.75rem;
+            transition: all 0.15s cubic-bezier(0.77, 0, 0.18, 1);
+            position: relative;
+            z-index: 1;
+            box-shadow: 3px 3px 0 var(--primary-color);
+        }
+
+        .sidebar-toggle:hover {
+            background: var(--yellow);
+            color: var(--primary-color);
+            transform: translate(-2px, -2px);
+            box-shadow: 5px 5px 0 var(--primary-color);
+        }
+
+        .sidebar-content {
+            padding: 2.5rem;
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            background: var(--secondary-color);
+        }
+
+        .sidebar-content::-webkit-scrollbar {
+            width: 12px;
+        }
+
+        .sidebar-content::-webkit-scrollbar-track {
+            background: var(--secondary-color);
+            border: 2px solid var(--primary-color);
+            margin: 8px 0;
+        }
+
+        .sidebar-content::-webkit-scrollbar-thumb {
+            background: var(--yellow);
+            border: 2px solid var(--primary-color);
+        }
+
+        .sidebar-content::-webkit-scrollbar-thumb:hover {
+            background: var(--yellow);
+            transform: scale(1.05);
+        }
+
+        .sidebar-section {
+            margin-bottom: 3rem;
+            background: var(--secondary-color);
+            padding: 2rem;
+            border: 3px solid var(--primary-color);
+            box-shadow: 6px 6px 0 var(--primary-color);
+        }
+
+        .sidebar-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .sidebar-section-title {
+            font-family: 'Lexend Mega', sans-serif;
+            font-size: 1.125rem;
+            font-weight: 900;
+            color: var(--primary-color);
+            margin: 0 0 2rem 0;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding-bottom: 1.25rem;
+            border-bottom: 3px solid var(--primary-color);
+            position: relative;
+            text-transform: uppercase;
+        }
+
+        .sidebar-section-title::after {
+            content: '';
+            position: absolute;
+            bottom: -3px;
+            left: 0;
+            width: 60px;
+            height: 3px;
+            background: var(--yellow);
+        }
+
+        .sidebar-section-title i {
+            font-size: 1.125rem;
+            color: var(--primary-color);
+        }
+
+        .parameter-group {
+            margin-bottom: 2rem;
+        }
+
+        .parameter-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .parameter-group label {
+            display: block;
+            font-family: 'Public Sans', sans-serif;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 1rem;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .parameter-input {
+            width: 100%;
+            padding: 0.75rem 1.25rem;
+            border: 3px solid var(--primary-color);
+            font-family: 'Public Sans', sans-serif;
+            font-size: 0.875rem;
+            font-weight: 600;
+            transition: all 0.15s cubic-bezier(0.77, 0, 0.18, 1);
+            background: var(--secondary-color);
+            color: var(--primary-color);
+            box-shadow: 3px 3px 0 var(--primary-color);
+        }
+
+        .parameter-input:focus {
+            outline: none;
+            transform: translate(-2px, -2px);
+            box-shadow: 5px 5px 0 var(--primary-color);
+        }
+
+        .parameter-input:hover {
+            background: var(--accent-color);
+        }
+
+        /* Date Range Inputs - Stacked Design v2 */
+        .date-inputs {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .date-separator {
+            display: none;
+        }
+        
+        .date-inputs input[type="date"] {
+            font-size: 0.75rem;
+            padding: 0.625rem 0.75rem;
+            width: 100%;
+        }
+        
+        .date-inputs input[type="date"]::-webkit-calendar-picker-indicator {
+            cursor: pointer;
+            opacity: 0.6;
+            font-size: 0.75rem;
+        }
+
+        .range-inputs {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .parameter-range {
+            width: 100%;
+            height: 8px;
+            background: var(--secondary-color);
+            border: 2px solid var(--primary-color);
+            outline: none;
+            appearance: none;
+            -webkit-appearance: none;
+        }
+
+        .parameter-range::-webkit-slider-thumb {
+            appearance: none;
+            -webkit-appearance: none;
+            width: 24px;
+            height: 24px;
+            background: var(--primary-color);
+            cursor: pointer;
+            border: 3px solid var(--primary-color);
+            box-shadow: 3px 3px 0 var(--primary-color);
+        }
+
+        .parameter-range::-moz-range-thumb {
+            width: 24px;
+            height: 24px;
+            background: var(--primary-color);
+            cursor: pointer;
+            border: 3px solid var(--primary-color);
+            box-shadow: 3px 3px 0 var(--primary-color);
+        }
+
+        .range-labels {
+            display: flex;
+            justify-content: space-between;
+            font-family: 'Public Sans', sans-serif;
+            font-size: 0.875rem;
+            color: var(--primary-color);
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .control-buttons {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: nowrap;
+        }
+
+        .map-btn {
+            flex: 1;
+            font-family: 'Public Sans', sans-serif;
+            padding: 0.75rem 0.5rem;
+            border: 3px solid var(--primary-color);
+            font-size: 0.875rem;
+            font-weight: 700;
+            background: var(--secondary-color);
+            color: var(--primary-color);
+            cursor: pointer;
+            transition: all 0.15s cubic-bezier(0.77, 0, 0.18, 1);
+            text-align: center;
+            white-space: nowrap;
+            box-shadow: 3px 3px 0 var(--primary-color);
+            text-transform: uppercase;
+        }
+
+        .map-btn:hover {
+            background: var(--yellow);
+            transform: translate(-2px, -2px);
+            box-shadow: 5px 5px 0 var(--primary-color);
+        }
+
+        .map-btn.active {
+            background: var(--primary-color);
+            color: var(--secondary-color);
+            box-shadow: 3px 3px 0 var(--primary-color);
+        }
+
+        .reset-btn {
+            background: var(--orange);
+            border: 3px solid var(--primary-color);
+            box-shadow: 4px 4px 0 var(--primary-color);
+            color: var(--secondary-color);
+            font-family: 'Lexend Mega', sans-serif;
+            font-weight: 900;
+            text-transform: uppercase;
+            width: 100%;
+            margin-top: 1rem;
+            transition: all 0.15s cubic-bezier(0.77, 0, 0.18, 1);
+        }
+
+        .reset-btn:hover {
+            background: var(--error-color);
+            transform: translate(-3px, -3px);
+            box-shadow: 7px 7px 0 var(--primary-color);
+        }
+
+        /* Parameter Actions - Row Layout */
+        .parameter-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+            margin-top: 2rem;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            font-family: 'Lexend Mega', sans-serif;
+            font-weight: 900;
+            border: 3.5px solid var(--primary-color);
+            box-shadow: 6px 6px 0 var(--primary-color);
+            cursor: pointer;
+            transition: all 0.15s cubic-bezier(0.77, 0, 0.18, 1);
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+            font-size: 0.875rem;
+            background: var(--secondary-color);
+            color: var(--primary-color);
+        }
+
+        .btn-sm {
+            padding: 0.5rem 1rem;
+            font-family: 'Lexend Mega', sans-serif;
+            font-weight: 900;
+            border: 3px solid var(--primary-color);
+            box-shadow: 4px 4px 0 var(--primary-color);
+            letter-spacing: 0.025em;
+            font-size: 0.75rem;
+            width: 100%;
+        }
+
+        .btn:hover {
+            transform: translate(-3px, -3px);
+            box-shadow: 9px 9px 0 var(--primary-color);
+        }
+
+        .btn-primary {
+            background: var(--blue);
+            color: var(--secondary-color);
+            border-color: var(--primary-color);
+            box-shadow: 6px 6px 0 var(--primary-color);
+        }
+
+        .btn-primary:hover {
+            transform: translate(-3px, -3px);
+            box-shadow: 9px 9px 0 var(--primary-color);
+            background: var(--blue);
+        }
+
+        .btn-secondary {
+            background: var(--secondary-color);
+            color: var(--primary-color);
+            border-color: var(--primary-color);
+            box-shadow: 6px 6px 0 var(--primary-color);
+        }
+
+        .btn-secondary:hover {
+            background: var(--yellow);
+            transform: translate(-3px, -3px);
+            box-shadow: 9px 9px 0 var(--primary-color);
+        }
+
+        .filter-status {
+            margin-top: 1rem;
+            padding: 1rem;
+            font-family: 'Public Sans', sans-serif;
+            font-size: 0.875rem;
+            text-align: center;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .filter-status-success {
+            background: var(--green);
+            color: var(--secondary-color);
+            border: 3px solid var(--primary-color);
+            box-shadow: 4px 4px 0 var(--primary-color);
+        }
+
+        .filter-status-error {
+            background: var(--error-color);
+            color: var(--secondary-color);
+            border: 3px solid var(--primary-color);
+            box-shadow: 4px 4px 0 var(--primary-color);
+        }
+
+        .filter-status-warning {
+            background: var(--warning-color);
+            color: var(--secondary-color);
+            border: 3px solid var(--primary-color);
+            box-shadow: 4px 4px 0 var(--primary-color);
+        }
+
+        .map-wrapper {
+            flex: 1;
+            height: 700px !important;
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+            border: 4px solid var(--primary-color);
+            box-shadow: 8px 8px 0 var(--primary-color);
+            background: #1a1a1a;
+        }
+
+        .map-info-button {
+            background: var(--secondary-color);
+            border: 3px solid var(--primary-color);
+            color: var(--primary-color);
+            width: 44px;
+            height: 44px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.125rem;
+            box-shadow: 4px 4px 0 var(--primary-color);
+            transition: all 0.15s cubic-bezier(0.77, 0, 0.18, 1);
+            font-weight: 700;
+        }
+
+        .map-info-button:hover {
+            background: var(--yellow);
+            transform: translate(-2px, -2px);
+            box-shadow: 6px 6px 0 var(--primary-color);
+        }
+
+        .map-info-button:active {
+            transform: translate(0, 0);
+            box-shadow: 2px 2px 0 var(--primary-color);
+        }
+
+        .map-info-popup {
+            position: absolute;
+            top: 1rem;
+            right: 5.5rem;
+            z-index: 99;
+            background: var(--secondary-color);
+            border: 4px solid var(--primary-color);
+            box-shadow: 8px 8px 0 var(--primary-color);
+            max-width: 350px;
+            animation: slideInRight 0.3s ease;
+        }
+
+        @keyframes slideInRight {
+            from {
+                opacity: 0;
+                transform: translateX(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .map-info-content {
+            padding: 1.5rem;
+            position: relative;
+        }
+
+        .map-info-content h4 {
+            font-family: 'Lexend Mega', sans-serif;
+            margin: 0 0 1rem 0;
+            color: var(--primary-color);
+            font-size: 1.125rem;
+            font-weight: 900;
+            text-transform: uppercase;
+        }
+
+        .map-info-content p {
+            font-family: 'Public Sans', sans-serif;
+            margin: 0;
+            color: var(--primary-color);
+            font-size: 0.9375rem;
+            font-weight: 600;
+            line-height: 1.6;
+        }
+
+        .map-info-close {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: var(--orange);
+            border: 3px solid var(--primary-color);
+            width: 32px;
+            height: 32px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--secondary-color);
+            box-shadow: 2px 2px 0 var(--primary-color);
+            transition: all 0.15s cubic-bezier(0.77, 0, 0.18, 1);
+        }
+
+        .map-info-close:hover {
+            background: var(--error-color);
+            transform: translate(-1px, -1px);
+            box-shadow: 3px 3px 0 var(--primary-color);
+        }
+
+        .map-view-toggle {
+            position: absolute;
+            bottom: 1rem;
+            left: 1rem;
+            z-index: 100;
+            background: var(--secondary-color);
+            border: 3px solid var(--primary-color);
+            color: var(--primary-color);
+            width: 44px;
+            height: 44px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.875rem;
+            box-shadow: 4px 4px 0 var(--primary-color);
+            transition: all 0.15s cubic-bezier(0.77, 0, 0.18, 1);
+            font-weight: 700;
+        }
+
+        .map-view-toggle:hover {
+            background: var(--blue);
+            color: var(--secondary-color);
+            transform: translate(-2px, -2px);
+            box-shadow: 6px 6px 0 var(--primary-color);
+        }
+
+        .map-view-toggle:active {
+            transform: translate(0, 0);
+            box-shadow: 2px 2px 0 var(--primary-color);
+        }
+
+        /* Chart Detail Modal */
+        .chart-detail-modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--secondary-color);
+            padding: 2rem;
+            border: 4px solid var(--primary-color);
+            box-shadow: 12px 12px 0 var(--primary-color);
+            z-index: 20000;
+            min-width: 400px;
+            max-width: 500px;
+            animation: modalSlideIn 0.3s ease;
+        }
+
+        @keyframes modalSlideIn {
+            from {
+                opacity: 0;
+                transform: translate(-50%, -45%);
+            }
+            to {
+                opacity: 1;
+                transform: translate(-50%, -50%);
+            }
+        }
+
+        .chart-detail-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 19999;
+        }
+
+        .chart-detail-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 3px solid var(--primary-color);
+        }
+
+        .chart-detail-header h3 {
+            font-family: 'Lexend Mega', sans-serif;
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 900;
+            color: var(--primary-color);
+            text-transform: uppercase;
+        }
+
+        .chart-detail-close {
+            background: var(--orange);
+            border: 3px solid var(--primary-color);
+            box-shadow: 2px 2px 0 var(--primary-color);
+            width: 32px;
+            height: 32px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--secondary-color);
+            transition: all 0.15s cubic-bezier(0.77, 0, 0.18, 1);
+        }
+
+        .chart-detail-close:hover {
+            background: var(--error-color);
+            transform: translate(-1px, -1px);
+            box-shadow: 3px 3px 0 var(--primary-color);
+        }
+
+        .chart-detail-content {
+            display: grid;
+            gap: 0.75rem;
+        }
+
+        .detail-stat {
+            background: var(--secondary-color);
+            padding: 1rem 1.25rem;
+            border: 3px solid var(--primary-color);
+            box-shadow: 3px 3px 0 var(--primary-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-left: 6px solid var(--blue);
+        }
+
+        .detail-stat-label {
+            font-family: 'Public Sans', sans-serif;
+            font-weight: 700;
+            color: var(--primary-color);
+            font-size: 0.9375rem;
+            text-transform: uppercase;
+        }
+
+        .detail-stat-value {
+            font-family: 'Lexend Mega', sans-serif;
+            font-weight: 900;
+            color: var(--primary-color);
+            font-size: 1.125rem;
+        }
+
+        /* Splash Screen */
+        .splash-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #1a1a1a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 99999;
+            animation: splashFadeIn 0.8s ease;
+            border: 8px solid var(--primary-color);
+        }
+
+        .splash-screen.fade-out {
+            animation: splashFadeOut 0.8s ease forwards;
+        }
+
+        @keyframes splashFadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes splashFadeOut {
+            to {
+                opacity: 0;
+                transform: scale(1.1);
+            }
+        }
+
+        .splash-content {
+            position: relative;
+            z-index: 2;
+            text-align: center;
+            color: var(--primary-color);
+            animation: contentSlideUp 1s ease 0.3s backwards;
+        }
+
+        @keyframes contentSlideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .splash-logo {
+            margin-bottom: 2rem;
+            background: var(--secondary-color);
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 4px solid var(--secondary-color);
+            box-shadow: none;
+        }
+
+        .splash-icon {
+            font-size: 5rem;
+            color: var(--primary-color);
+        }
+
+        .splash-title {
+            font-family: 'Lexend Mega', sans-serif;
+            font-size: 3rem;
+            font-weight: 900;
+            margin: 0 0 1rem 0;
+            letter-spacing: -0.02em;
+            color: var(--secondary-color);
+            text-transform: uppercase;
+        }
+
+        .splash-subtitle {
+            font-family: 'Public Sans', sans-serif;
+            font-size: 1.25rem;
+            margin: 0 0 3rem 0;
+            font-weight: 600;
+            color: var(--secondary-color);
+            text-transform: uppercase;
+        }
+
+        .enter-btn {
+            background: var(--secondary-color);
+            color: var(--primary-color);
+            border: 4px solid var(--secondary-color);
+            box-shadow: none;
+            padding: 1rem 3rem;
+            font-family: 'Lexend Mega', sans-serif;
+            font-size: 1.25rem;
+            font-weight: 900;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            transition: all 0.15s cubic-bezier(0.77, 0, 0.18, 1);
+            text-transform: uppercase;
+            gap: 0.75rem;
+        }
+
+        .enter-btn:hover {
+            background: var(--color-data);
+            color: var(--secondary-color);
+            transform: none;
+            box-shadow: none;
+        }
+
+        .enter-btn:active {
+            transform: scale(0.98);
+            box-shadow: none;
+        }
+
+        .splash-background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: 1;
+        }
+
+        .splash-circle {
+            display: none;
+        }
+
+        .main-content-hidden {
+            display: none;
+        }
+
+        .main-content-visible {
+            animation: mainContentFadeIn 0.8s ease;
+        }
+
+        @keyframes mainContentFadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        /* Page entry animations - Uniform fade in */
+        .animate-on-enter {
+            opacity: 0;
+        }
+
+        .animated-visible {
+            animation: uniformFadeIn 0.8s ease forwards;
+        }
+
+        @keyframes uniformFadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        /* Responsive Breakpoints Overview:
+         * Large Desktop: 1920px+
+         * Desktop: 1200px - 1919px
+         * Laptop: 1024px - 1199px
+         * Tablet: 768px - 1023px
+         * Mobile: 481px - 767px
+         * Small Mobile: 320px - 480px
+         */
+
+        /* Laptop and below (1024px) */
+        @media (max-width: 1024px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 1.5rem;
+            }
+
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .map-sidebar {
+                width: 300px;
+            }
+        }
+
+        /* Tablet and below (768px) */
+        @media (max-width: 768px) {
+            /* Header - Responsive */
+            header {
+                padding: 1rem 0;
+            }
+
+            header .container > div {
+                padding: 1.5rem 1rem;
+            }
+
+            h1 {
+                font-size: 1.75rem;
+                margin-bottom: 0.5rem;
+            }
+
+            .subtitle {
+                font-size: 0.95rem;
+            }
+
+            /* Splash Screen */
+            .splash-title {
+                font-size: 2rem;
+                padding: 0 1rem;
+            }
+
+            .splash-subtitle {
+                font-size: 1rem;
+                padding: 0 1.5rem;
+            }
+
+            .splash-icon {
+                font-size: 3.5rem;
+            }
+
+            .enter-btn {
+                padding: 0.875rem 2.5rem;
+                font-size: 1.125rem;
+            }
+
+            /* Navbar - Tablet */
+            .navbar {
+                padding: 0.75rem 0;
+            }
+
+            .navbar .container > div {
+                padding: 0.75rem 1rem;
+                gap: 0.5rem;
+            }
+
+            .navbar-brand {
+                font-size: 1rem;
+            }
+
+            .navbar-nav {
+                gap: 0.75rem;
+            }
+
+            .nav-link {
+                padding: 0.5rem;
+                font-size: 0.75rem;
+                justify-content: center;
+            }
+
+            /* Hide navigation text on tablets, show icons only */
+            .nav-text {
+                display: none;
+            }
+
+            /* Make icons bigger and chunkier on tablets */
+            .nav-icon {
+                font-size: 1.8em;
+                font-weight: 900;
+                text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+                filter: drop-shadow(0px 0px 2px rgba(255, 255, 255, 0.3));
+            }
+
+            .nav-link {
+                padding: 0.75rem;
+                min-width: 56px;
+                min-height: 56px;
+            }
+
+            /* Hero Section */
+            .hero {
+                padding: 3rem 0 2rem;
+                min-height: auto;
+            }
+
+            .hero h1 {
+                font-size: 2rem;
+            }
+
+            .hero p {
+                font-size: 1rem;
+            }
+
+            /* Section Titles */
+            .section-title {
+                font-size: 1.5rem;
+                padding: 0.75rem 1rem;
+            }
+
+            /* Stats Cards - Stack on mobile */
+            .stats-grid {
+                grid-template-columns: 1fr !important;
+                gap: 1rem;
+            }
+
+            .stat-card {
+                padding: 1.25rem;
+            }
+
+            .stat-value {
+                font-size: 2rem;
+            }
+
+            /* Map Section - Stack sidebar */
+            .map-container {
+                padding: 0;
+            }
+
+            .map-content-wrapper {
+                flex-direction: column;
+                height: auto !important;
+                min-height: auto !important;
+            }
+
+            .map-sidebar {
+                width: 100%;
+                max-width: 100%;
+                min-height: auto;
+                height: auto !important;
+                border-radius: 0;
+                order: 2; /* Map first, filters below */
+            }
+
+            .sidebar-content {
+                padding: 1.5rem;
+            }
+
+            .sidebar-content h3 {
+                font-size: 1.25rem;
+                margin-bottom: 1.5rem;
+            }
+
+            .map-wrapper {
+                order: 1;
+                width: 100% !important;
+                height: 400px !important;
+                min-height: 400px !important;
+                border-radius: 0;
+                position: relative !important;
+                display: block !important;
+            }
+
+            #main-map {
+                width: 100% !important;
+                height: 400px !important;
+                min-height: 400px !important;
+                display: block !important;
+            }
+
+            /* Map Controls - Larger for touch */
+            .map-zoom-controls button,
+            .map-info-btn,
+            .map-home-btn,
+            .map-view-toggle {
+                width: 48px !important;
+                height: 48px !important;
+                font-size: 1.125rem;
+                border-width: 2px;
+            }
+
+            .map-zoom-controls {
+                right: 0.75rem;
+                top: 0.75rem;
+            }
+
+            .map-view-toggle {
+                left: 0.75rem;
+                bottom: 0.75rem;
+                font-size: 0.875rem;
+            }
+
+            /* Parameter controls - Better spacing */
+            .parameter-group {
+                margin-bottom: 1.5rem;
+            }
+
+            .parameter-group label {
+                font-size: 0.9375rem;
+                margin-bottom: 0.5rem;
+            }
+
+            .parameter-group input,
+            .parameter-group select {
+                padding: 0.75rem;
+                font-size: 1rem;
+            }
+
+            .control-buttons {
+                gap: 0.5rem;
+            }
+
+            .map-btn {
+                padding: 0.75rem 1rem;
+                font-size: 0.9375rem;
+            }
+
+            .parameter-actions {
+                gap: 0.75rem;
+            }
+
+            .parameter-actions button {
+                padding: 0.875rem 1.5rem;
+                font-size: 1rem;
+            }
+
+            /* Charts - Stack on mobile */
+            .charts-grid {
+                grid-template-columns: 1fr !important;
+                gap: 1.5rem;
+            }
+
+            .chart-container {
+                padding: 1.25rem;
+            }
+
+            .chart-container h3 {
+                font-size: 1.125rem;
+            }
+
+            /* Footer */
+            footer {
+                padding: 1.5rem 0;
+            }
+
+            .footer-bottom p {
+                font-size: 0.875rem;
+            }
+
+            /* Urban Mobility Insights - Mobile */
+            .explorer-header {
+                padding: 1.5rem 1rem;
+            }
+
+            .explorer-header h2 {
+                font-size: 1.75rem;
+            }
+
+            .explorer-subtitle {
+                font-size: 0.875rem;
+            }
+
+            .insights-explorer {
+                padding: 1.5rem 1rem;
+            }
+
+            .analysis-controls {
+                padding: 1rem;
+            }
+
+            #dynamic-controls {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+            }
+
+            .control-group {
+                margin-bottom: 1rem;
+            }
+
+            .insight-btn {
+                padding: 0.875rem 1.5rem;
+                font-size: 0.9rem;
+            }
+
+            .insights-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+                padding: 1rem;
+            }
+
+            .insights-header h3 {
+                font-size: 1.5rem;
+            }
+
+            .summary-grid {
+                grid-template-columns: 1fr !important;
+                gap: 1rem;
+            }
+
+            .summary-card {
+                padding: 1.5rem 1rem;
+                min-height: 140px;
+            }
+
+            .summary-value {
+                font-size: 2rem;
+            }
+
+            .summary-label {
+                font-size: 0.75rem;
+            }
+
+            .insights-table-section {
+                overflow-x: auto;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            .insights-table {
+                min-width: 600px;
+                font-size: 0.875rem;
+            }
+
+            .table-header,
+            .table-row {
+                padding: 0.75rem 0.5rem;
+            }
+
+            .table-header > div,
+            .table-row > div {
+                padding: 0.5rem;
+            }
+
+            /* Modal - Better mobile sizing */
+            .chart-detail-modal {
+                min-width: 90%;
+                max-width: 90%;
+                padding: 1.5rem;
+                margin: 1rem;
+            }
+
+            .chart-detail-header h3 {
+                font-size: 1.25rem;
+            }
+
+            .detail-stat {
+                padding: 0.875rem 1rem;
+            }
+
+            .detail-stat-label {
+                font-size: 0.875rem;
+            }
+
+            .detail-stat-value {
+                font-size: 1rem;
+            }
+        }
+
+        /* Mobile phones (480px and below) */
+        @media (max-width: 480px) {
+            /* Even smaller adjustments */
+            .container {
+                padding: 0 1rem;
+            }
+
+            /* Header - Mobile */
+            header {
+                padding: 0.75rem 0;
+            }
+
+            header .container > div {
+                padding: 1.25rem 0.75rem;
+            }
+
+            h1 {
+                font-size: 1.4rem;
+                margin-bottom: 0.375rem;
+                line-height: 1.2;
+            }
+
+            .subtitle {
+                font-size: 0.8rem;
+                line-height: 1.4;
+            }
+
+            .splash-title {
+                font-size: 1.5rem;
+            }
+
+            .splash-subtitle {
+                font-size: 0.9375rem;
+            }
+
+            .hero h1 {
+                font-size: 1.75rem;
+            }
+
+            .section-title {
+                font-size: 1.25rem;
+                padding: 0.625rem 0.875rem;
+            }
+
+            /* Navbar - Mobile */
+            .navbar .container > div {
+                padding: 0.5rem 0.75rem;
+                gap: 0.25rem;
+            }
+
+            .navbar-brand {
+                font-size: 0.9rem;
+            }
+
+            .navbar-nav {
+                gap: 0.5rem;
+                overflow-x: auto;
+                overflow-y: hidden;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: none;
+                -ms-overflow-style: none;
+            }
+
+            .navbar-nav::-webkit-scrollbar {
+                display: none;
+            }
+
+            .nav-link {
+                padding: 0.6rem;
+                font-size: 0.7rem;
+                flex-shrink: 0;
+                justify-content: center;
+                min-width: 60px;
+                min-height: 60px;
+            }
+
+            /* Make icons bigger and chunkier on mobile */
+            .nav-icon {
+                font-size: 2.2em;
+                font-weight: 900;
+                text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+                filter: drop-shadow(0px 0px 2px rgba(255, 255, 255, 0.3));
+            }
+
+            /* Make brand logo bigger on mobile */
+            .brand-logo {
+                font-size: 1.8em;
+                font-weight: 900;
+                text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+                filter: drop-shadow(0px 0px 2px rgba(255, 255, 255, 0.3));
+            }
+
+            /* Hide brand text on mobile, show logo only */
+            .brand-text {
+                display: none;
+            }
+
+            .navbar-brand {
+                justify-content: center;
+                padding: 0.25rem;
+            }
+
+            .stat-card {
+                padding: 1rem;
+            }
+
+            .stat-value {
+                font-size: 1.75rem;
+            }
+
+            .stat-label {
+                font-size: 0.8125rem;
+            }
+
+            .map-wrapper,
+            #main-map {
+                height: 350px !important;
+                min-height: 350px !important;
+            }
+
+            .sidebar-content {
+                padding: 1rem;
+            }
+
+            .sidebar-content h3 {
+                font-size: 1.125rem;
+            }
+
+            .map-btn {
+                padding: 0.625rem 0.875rem;
+                font-size: 0.875rem;
+            }
+
+            .parameter-actions button {
+                padding: 0.75rem 1.25rem;
+                font-size: 0.9375rem;
+            }
+
+            .chart-container {
+                padding: 1rem;
+            }
+
+            .chart-detail-modal {
+                min-width: 95%;
+                padding: 1.25rem;
+            }
+        }
+
+        /* Ultra-small screens (320px and below) */
+        @media (max-width: 320px) {
+            .navbar .container > div {
+                padding: 0.4rem 0.5rem;
+                gap: 0.2rem;
+            }
+
+            .navbar-brand {
+                font-size: 0.8rem;
+            }
+
+            .navbar-nav {
+                gap: 0.3rem;
+            }
+
+            .nav-link {
+                padding: 0.5rem;
+                font-size: 0.65rem;
+                min-width: 56px;
+                min-height: 56px;
+            }
+
+            /* Make icons bigger and chunkier on ultra-small screens */
+            .nav-icon {
+                font-size: 2em;
+                font-weight: 900;
+                text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+                filter: drop-shadow(0px 0px 2px rgba(255, 255, 255, 0.3));
+            }
+
+            /* Make brand logo bigger on ultra-small screens */
+            .brand-logo {
+                font-size: 1.6em;
+                font-weight: 900;
+                text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+                filter: drop-shadow(0px 0px 2px rgba(255, 255, 255, 0.3));
+            }
+
+            /* Ensure brand text is hidden */
+            .brand-text {
+                display: none !important;
+            }
+        }
+
+        /* Very small screens (280px and below) */
+        @media (max-width: 280px) {
+            .navbar .container > div {
+                padding: 0.3rem 0.4rem;
+                gap: 0.15rem;
+            }
+
+            .navbar-brand {
+                font-size: 0.7rem;
+            }
+
+            .navbar-nav {
+                gap: 0.2rem;
+            }
+
+            .nav-link {
+                padding: 0.4rem;
+                font-size: 0.6rem;
+                min-width: 52px;
+                min-height: 52px;
+            }
+
+            /* Make icons bigger and chunkier on very small screens */
+            .nav-icon {
+                font-size: 1.8em;
+                font-weight: 900;
+                text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+                filter: drop-shadow(0px 0px 2px rgba(255, 255, 255, 0.3));
+            }
+
+            /* Make brand logo bigger on very small screens */
+            .brand-logo {
+                font-size: 1.4em;
+                font-weight: 900;
+                text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+                filter: drop-shadow(0px 0px 2px rgba(255, 255, 255, 0.3));
+            }
+
+            /* Hide one navigation item on very small screens */
+            .navbar-nav li:nth-child(4) {
+                display: none;
+            }
+
+            /* Ensure brand text is hidden */
+            .brand-text {
+                display: none !important;
+            }
+        }
+
+        /* Touch-friendly improvements for all mobile */
+        @media (hover: none) and (pointer: coarse) {
+            /* Larger tap targets */
+            button,
+            .map-btn,
+            .nav-link,
+            .stat-card {
+                min-height: 44px;
+                cursor: pointer;
+            }
+
+            /* Ensure navigation icons are touch-friendly */
+            .nav-link {
+                min-width: 52px;
+                min-height: 52px;
+            }
+
+            /* Make icons more prominent on touch devices */
+            .nav-icon {
+                font-size: 1.5em;
+                font-weight: 900;
+                text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+                filter: drop-shadow(0px 0px 2px rgba(255, 255, 255, 0.3));
+            }
+
+            /* Remove hover effects, keep active states */
+            .map-btn:hover,
+            .nav-link:hover {
+                transform: none;
+            }
+
+            .map-btn:active {
+                transform: scale(0.95);
+            }
+
+            /* Prevent double-tap zoom on buttons */
+            button,
+            a {
+                touch-action: manipulation;
+            }
+        }
+
+        .map-zoom-controls {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            z-index: 100;
+            display: flex;
+                flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .map-zoom-btn {
+            background: var(--secondary-color);
+            border: 3px solid var(--primary-color);
+            color: var(--primary-color);
+            width: 44px;
+            height: 44px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.125rem;
+            box-shadow: 4px 4px 0 var(--primary-color);
+            transition: all 0.15s cubic-bezier(0.77, 0, 0.18, 1);
+            font-weight: 700;
+        }
+
+        .map-zoom-btn:hover {
+            background: var(--green);
+            color: var(--secondary-color);
+            transform: translate(-2px, -2px);
+            box-shadow: 6px 6px 0 var(--primary-color);
+        }
+
+        .map-zoom-btn:active {
+            transform: translate(0, 0);
+            box-shadow: 2px 2px 0 var(--primary-color);
+        }
+
+        #main-map {
+            width: 100% !important;
+            height: 100% !important;
+            overflow: hidden;
+            position: absolute !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
+            background: #1a1a1a;
+            margin: 0 !important;
+            padding: 0 !important;
+            border: none !important;
+            outline: none !important;
+        }
+
+        #main-map canvas {
+            width: 100% !important;
+            height: 100% !important;
+            overflow: hidden;
+        }
+
+        .map-wrapper * {
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+<body>
+    <!-- Splash Screen -->
+    <div id="splash-screen" class="splash-screen">
+        <div class="splash-content">
+            <div class="splash-logo">
+                <i class="fas fa-taxi splash-icon"></i>
+            </div>
+            <h1 class="splash-title">Urban Mobility Data Explorer</h1>
+            <p class="splash-subtitle">Explore NYC taxi trip data through interactive visualizations</p>
+            <button id="enter-btn" class="enter-btn">
+                Enter
+            </button>
+        </div>
+        <div class="splash-background">
+            <div class="splash-circle splash-circle-1"></div>
+            <div class="splash-circle splash-circle-2"></div>
+            <div class="splash-circle splash-circle-3"></div>
+        </div>
+    </div>
+
+    <!-- Main Content (hidden initially) -->
+    <div id="main-content" class="main-content-hidden">
+    
+    <!-- Main Container Wrapper -->
+    <div class="main-container-wrapper">
+    
+    <!-- Navbar -->
+    <nav class="navbar animate-on-enter">
+        <div class="container">
+            <div>
+                <div class="navbar-brand">
+                    <i class="fas fa-taxi brand-logo"></i>
+                    <span class="brand-text">Urban Mobility Data Explorer</span>
+                </div>
+                <ul class="navbar-nav">
+                    <li><a href="#quick-stats" class="nav-link" title="Quick Stats">
+                        <i class="fas fa-chart-bar nav-icon"></i>
+                        <span class="nav-text">Stats</span>
+                    </a></li>
+                    <li><a href="#analytics" class="nav-link" title="Analytics">
+                        <i class="fas fa-chart-line nav-icon"></i>
+                        <span class="nav-text">Analytics</span>
+                    </a></li>
+                    <li><a href="#spatial" class="nav-link" title="Spatial Analysis">
+                        <i class="fas fa-map-marked-alt nav-icon"></i>
+                        <span class="nav-text">Spatial</span>
+                    </a></li>
+                    <li><a href="#custom-algorithms" class="nav-link" title="Urban Insights">
+                        <i class="fas fa-lightbulb nav-icon"></i>
+                        <span class="nav-text">Insights</span>
+                    </a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <header>
+        <div class="container">
+            <div>
+                <h1>NYC Taxi Data Explorer</h1>
+                <p class="subtitle">Explore spatial patterns and trends in urban mobility across New York City</p>
+            </div>
+        </div>
+    </header>
+
+        <!-- Quick Stats Section -->
+    <section class="section" id="quick-stats">
+        <div class="container">
+                <h2 class="section-title">Quick Stats</h2>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fas fa-taxi"></i></div>
+                    <h3>Total Trips</h3>
+                    <p class="stat-value" id="total-trips">1,458,641</p>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fas fa-road"></i></div>
+                    <h3>Avg Distance</h3>
+                    <p class="stat-value" id="avg-distance">3.4 km</p>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fas fa-clock"></i></div>
+                    <h3>Avg Duration</h3>
+                    <p class="stat-value" id="avg-duration">16 min</p>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon"><i class="fas fa-users"></i></div>
+                    <h3>Vendors</h3>
+                    <p class="stat-value" id="vendor-count">2</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    <!-- Charts Section -->
+    <section class="section" id="analytics">
+        <div class="container">
+            <h2 class="section-title">Analytics Dashboard</h2>
+            <div class="charts-grid">
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h3>Total Pickups and Dropoffs by Neighborhood</h3>
+                        <p class="chart-description">Top neighborhoods for taxi pickups and dropoffs</p>
+                    </div>
+                    <div class="chart-canvas">
+                        <canvas id="neighborhood-chart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h3>Trip Frequency by Month</h3>
+                        <p class="chart-description">Monthly trip volume trends</p>
+                    </div>
+                    <div class="chart-canvas">
+                        <canvas id="monthly-chart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h3>Trip Frequency by Hour</h3>
+                        <p class="chart-description">Hourly trip distribution</p>
+                    </div>
+                    <div class="chart-canvas">
+                        <canvas id="hourly-chart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h3>Fare Distribution by Category</h3>
+                        <p class="chart-description">Trip distribution across fare categories</p>
+                    </div>
+                    <div class="chart-canvas">
+                        <canvas id="fare-chart"></canvas>
+                    </div>
+                </div>
+                    </div>
+                    </div>
+    </section>
+
+    <!-- Spatial Analysis Section -->
+    <section class="section" id="spatial">
+        <div class="container">
+            <h2 class="section-title">Spatial Analysis</h2>
+            
+            <div class="map-container">
+            <div class="map-content-wrapper">
+                <!-- Sidebar -->
+                <div class="map-sidebar">
+                    <div class="sidebar-content">
+                        <h3 style="font-size: 1.5rem; font-weight: 700; color: #1e293b; margin: 0 0 2rem 0; padding-bottom: 1rem; border-bottom: 2px solid #e2e8f0;">Filters</h3>
+
+                            <div class="parameter-group">
+                                <label>Layers</label>
+                                <div class="control-buttons">
+                                    <button class="map-btn active" onclick="toggleLayers('both')">Both</button>
+                                    <button class="map-btn" onclick="toggleLayers('pickups')">Pickups</button>
+                                    <button class="map-btn" onclick="toggleLayers('dropoffs')">Dropoffs</button>
+                </div>
+            </div>
+                            
+                            <div class="parameter-group">
+                                <label>Date Range</label>
+                                <div class="date-inputs">
+                                    <div class="date-input-wrapper">
+                                        <small style="display: block; font-size: 0.688rem; font-weight: 600; color: #6b7280; margin-bottom: 0.25rem; text-transform: uppercase; letter-spacing: 0.05em;">From</small>
+                                        <input type="date" id="startDate" class="parameter-input">
+                    </div>
+                                    <div class="date-input-wrapper">
+                                        <small style="display: block; font-size: 0.688rem; font-weight: 600; color: #6b7280; margin-bottom: 0.25rem; text-transform: uppercase; letter-spacing: 0.05em;">To</small>
+                                        <input type="date" id="endDate" class="parameter-input">
+                </div>
+                </div>
+            </div>
+
+                            <div class="parameter-group">
+                                <label for="neighborhoodSelect">Neighborhood</label>
+                                <select id="neighborhoodSelect" class="parameter-input">
+                                    <option value="">All Neighborhoods</option>
+                                </select>
+    </div>
+
+                            <div class="parameter-group">
+                                <label for="hourRange">Time of Day</label>
+                                <div class="range-inputs">
+                                    <input type="range" id="startHour" min="0" max="23" value="0" class="parameter-range">
+                                    <div class="range-labels">
+                                        <span id="startHourLabel">0:00</span>
+                                        <span id="endHourLabel">23:00</span>
+            </div>
+                                    <input type="range" id="endHour" min="0" max="23" value="23" class="parameter-range">
+        </div>
+                            </div>
+
+                            <div class="parameter-group">
+                                <label for="monthSelect">Month</label>
+                                <select id="monthSelect" class="parameter-input">
+                                    <option value="">All Months</option>
+                                </select>
+                            </div>
+
+                            <div class="parameter-group">
+                                <label for="distanceRange">Distance Range (km)</label>
+                                <div class="range-inputs">
+                                    <input type="range" id="minDistance" min="0" max="50" value="0" class="parameter-range">
+                                    <div class="range-labels">
+                                        <span id="minDistanceLabel">0 km</span>
+                                        <span id="maxDistanceLabel">50 km</span>
+                                    </div>
+                                    <input type="range" id="maxDistance" min="0" max="50" value="50" class="parameter-range">
+                                </div>
+                            </div>
+
+                            <div class="parameter-actions">
+                                <button id="applyFilters" class="btn btn-primary btn-sm">
+                                    <i class="fas fa-filter"></i>
+                                    Apply Filters
+                                </button>
+                                <button id="resetFilters" class="btn btn-secondary btn-sm">
+                                    <i class="fas fa-undo"></i>
+                                    Reset
+                                </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Map Container -->
+                <div class="map-wrapper">
+                    <div id="main-map"></div>
+                    
+                    <!-- Map Controls (Right Side) -->
+                    <div class="map-zoom-controls">
+                        <button class="map-zoom-btn" onclick="zoomIn()">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                        <button class="map-zoom-btn" onclick="zoomOut()">
+                            <i class="fas fa-minus"></i>
+                        </button>
+                        <button class="map-zoom-btn" onclick="resetCamera()">
+                            <i class="fas fa-home"></i>
+                        </button>
+                        <button id="map-info-btn" class="map-info-button" onclick="toggleMapInfo()">
+                            <i class="fas fa-info"></i>
+                        </button>
+                    </div>
+                    
+                    <!-- View Mode Toggle (Bottom Left) -->
+                    <button id="map-view-toggle" class="map-view-toggle" onclick="toggleViewMode()">
+                        <span id="view-toggle-text">3D</span>
+                    </button>
+                    
+                    <!-- Map Info Popup -->
+                    <div id="map-info-popup" class="map-info-popup" style="display: none;">
+                        <div class="map-info-content">
+                            <button class="map-info-close" onclick="toggleMapInfo()">
+                                <i class="fas fa-times"></i>
+                            </button>
+                            <h4>Map Information</h4>
+                            <p>This map shows the spatial distribution of taxi pickups and drop-offs across NYC. Terracotta cells have relatively more pickups, and purple cells have relatively more dropoffs.</p>
+                        </div>
+                    </div>
+                </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Custom Algorithm Section -->
+    <section class="section animate-on-enter" id="custom-algorithms">
+        <div class="container">
+            <div id="custom-algorithm-container"></div>
+        </div>
+    </section>
+
+    <footer class="animate-on-enter">
+        <div class="container">
+            <div>
+                <div class="footer-bottom">
+                    <p>© 2025 Shima Serein</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    </div> <!-- End of main-container-wrapper -->
+
+    </div> <!-- End of main-content -->
+
+    <script>
+        // API Configuration
+        const API_BASE = 'http://localhost:8000/api';
+        window.API_BASE = API_BASE;
+        
+        // Global variables
+        let map;
+        let deckOverlay;
+        let tripsData = [];
+        let currentLayer = 'both'; // No basemap switching - using MapTiler Streets only
+        let currentViewMode = '3d'; // View mode: '2d' (bird's eye) or '3d' (perspective)
+
+        // Parameter state
+        let currentFilters = {};
+        let parameterOptions = {};
+        
+        // Cache for H3 grid data
+        let h3GridCache = new Map();
+        
+        // Chart instances for cleanup
+        let chartInstances = {
+            neighborhood: null,
+            monthly: null,
+            hourly: null,
+            fare: null
+        };
+        
+        // Initial map state
+        const initialViewState = {
+            latitude: 40.7128,
+            longitude: -74.006,
+            zoom: 11,
+            pitch: 60, // Start with 3D perspective
+            bearing: 0
+        };
+
+        // Initialize the application (called after splash screen)
+        async function initializeApp() {
+            console.log('Initializing NYC Taxi Data Explorer...');
+            
+            try {
+                // Initialize all components
+                await loadAllData();
+                initializeMaps();
+                initializeParameterControls();
+                initializeSidebar();
+                initializeCustomAlgorithmView();
+                
+                console.log('Application initialized successfully');
+            } catch (error) {
+                console.error('Failed to initialize application:', error);
+                alert('Failed to initialize map. Please ensure the backend is running at ' + API_BASE);
+            }
+        }
+
+        // Initialize Custom Algorithm View
+        function initializeCustomAlgorithmView() {
+            console.log('Initializing Custom Algorithm View...');
+            
+            try {
+                // Create a simple app object for the custom algorithm view
+                const app = {
+                    data: {
+                        statistics: []
+                    }
+                };
+                
+                // Initialize the urban insights view
+                window.urbanInsightsView = new UrbanMobilityInsights(app);
+                
+                console.log('Urban Mobility Insights initialized successfully');
+            } catch (error) {
+                console.error('Failed to initialize Custom Algorithm View:', error);
+            }
+        }
+
+        // Load all data from API (optimized with parallel fetching)
+        async function loadAllData() {
+            try {
+                console.log('Loading data from API...');
+                
+                // Use preloaded health data if available
+                if (!preloadedData.health) {
+                    const healthData = await fetch(`${API_BASE}/health`).then(r => r.json());
+                    console.log('Health data loaded');
+                } else {
+                    console.log('Using preloaded health data');
+                }
+                
+                // Load chart data in background (non-blocking, with caching)
+                setTimeout(async () => {
+                    try {
+                        // Check localStorage cache first (1 hour expiry)
+                        const cacheKey = 'chartData_v1';
+                        const cacheExpiry = 1000 * 60 * 60; // 1 hour
+                        const cached = localStorage.getItem(cacheKey);
+                        
+                        let chartData = null;
+                        
+                        if (cached) {
+                            try {
+                                const parsedCache = JSON.parse(cached);
+                                if (Date.now() - parsedCache.timestamp < cacheExpiry) {
+                                    console.log('Using cached chart data (instant load!)');
+                                    chartData = parsedCache.data;
+                                }
+                            } catch (e) {
+                                console.log('Cache invalid, fetching fresh data');
+                            }
+                        }
+                        
+                        // Fetch if no valid cache
+                        if (!chartData) {
+                            console.log('Fetching fresh chart data...');
+                            const [neighborhoodData, vendorData, monthlyData, hourlyData, fareData] = await Promise.all([
+                    fetch(`${API_BASE}/trips/neighborhoods`).then(r => r.json()),
+                    fetch(`${API_BASE}/trips/vendors`).then(r => r.json()),
+                    fetch(`${API_BASE}/trips/statistics?groupBy=month`).then(r => r.json()),
+                                fetch(`${API_BASE}/trips/statistics?groupBy=hour`).then(r => r.json()),
+                                fetch(`${API_BASE}/trips/fares`).then(r => r.json())
+                            ]);
+                            
+                            chartData = {
+                                neighborhoods: neighborhoodData.data,
+                                vendors: vendorData.data,
+                                monthly: monthlyData.data,
+                                hourly: hourlyData.data,
+                                fares: fareData.data
+                            };
+                            
+                            // Cache for future visits
+                            try {
+                                localStorage.setItem(cacheKey, JSON.stringify({
+                                    timestamp: Date.now(),
+                                    data: chartData
+                                }));
+                                console.log('Chart data cached for future visits');
+                            } catch (e) {
+                                console.warn('Failed to cache data:', e);
+                            }
+                        }
+                        
+                        console.log('Chart data ready');
+                        initializeCharts(null, chartData.neighborhoods, chartData.vendors, 
+                                       chartData.monthly, chartData.hourly, chartData.fares);
+                    } catch (error) {
+                        console.error('Error loading chart data:', error);
+                    }
+                }, 0);
+                
+            } catch (error) {
+                console.error('Error loading data:', error);
+                throw error;
+            }
+        }
+
+        // Global Chart.js configuration for neo-brutalist styling
+        Chart.defaults.font.family = 'Public Sans, sans-serif';
+        Chart.defaults.font.weight = 'bold';
+        Chart.defaults.color = '#1a1a1a';
+        Chart.defaults.borderColor = '#1a1a1a';
+        Chart.defaults.backgroundColor = '#ffffff';
+
+
+        // Initialize charts
+        function initializeCharts(pickupDropoffData, neighborhoodData, vendorData, monthlyData, hourlyData, fareData) {
+            if (!neighborhoodData || !vendorData || !monthlyData || !hourlyData) {
+                console.error('Missing required data for charts');
+                return;
+            }
+            
+            // Destroy existing charts before creating new ones
+            if (chartInstances.neighborhood) {
+                chartInstances.neighborhood.destroy();
+            }
+            if (chartInstances.monthly) {
+                chartInstances.monthly.destroy();
+            }
+            if (chartInstances.hourly) {
+                chartInstances.hourly.destroy();
+            }
+            if (chartInstances.fare) {
+                chartInstances.fare.destroy();
+            }
+
+            // Neighborhood Chart (Stacked Bar)
+            const neighborhoodCtx = document.getElementById('neighborhood-chart').getContext('2d');
+            const neighborhoods = neighborhoodData;
+            
+            chartInstances.neighborhood = new Chart(neighborhoodCtx, {
+                type: 'bar',
+                data: {
+                    labels: neighborhoods.map(n => n.name),
+                    datasets: [{
+                        label: 'PICKUPS',
+                        data: neighborhoods.map(n => n.pickups),
+                        backgroundColor: '#c97064',
+                        borderColor: '#1a1a1a',
+                        borderWidth: 2,
+                        borderRadius: 0,
+                        borderSkipped: false,
+                        minBarLength: 5,
+                        barThickness: 'flex',
+                        maxBarThickness: 50
+                    }, {
+                        label: 'DROP-OFFS',
+                        data: neighborhoods.map(n => n.dropoffs || n.pickups),
+                        backgroundColor: '#6b5b95',
+                        borderColor: '#1a1a1a',
+                        borderWidth: 2,
+                        borderRadius: 0,
+                        borderSkipped: false,
+                        minBarLength: 5,
+                        barThickness: 'flex',
+                        maxBarThickness: 50
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { 
+                            stacked: true,
+                        ticks: {
+                            color: '#1a1a1a',
+                            font: {
+                                family: 'Public Sans',
+                                weight: 'bold',
+                                size: 12
+                            }
+                        },
+                        grid: {
+                            color: '#1a1a1a',
+                            lineWidth: 2
+                        }
+                        },
+                        y: { 
+                            stacked: true, 
+                            beginAtZero: true,
+                            min: 0,
+                        ticks: {
+                            color: '#1a1a1a',
+                            font: {
+                                family: 'Public Sans',
+                                weight: 'bold',
+                                size: 12
+                            }
+                        },
+                        grid: {
+                            color: '#1a1a1a',
+                            lineWidth: 2
+                        }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                        labels: {
+                            color: '#1a1a1a',
+                            font: {
+                                family: 'Lexend Mega',
+                                weight: 'bold',
+                                size: 14
+                            },
+                            usePointStyle: true,
+                            pointStyle: 'rect',
+                            padding: 20
+                        }
+                        }
+                    },
+                    onClick: (event, elements) => {
+                        if (elements.length > 0) {
+                            const index = elements[0].index;
+                            const neighborhood = neighborhoods[index];
+                            const total = neighborhood.pickups + neighborhood.dropoffs;
+                            showChartDetail('Neighborhood Details', neighborhood.name, {
+                                'Pickups': neighborhood.pickups.toLocaleString(),
+                                'Dropoffs': (neighborhood.dropoffs || neighborhood.pickups).toLocaleString(),
+                                'Total Trips': total.toLocaleString(),
+                                'Pickup Ratio': `${((neighborhood.pickups / total) * 100).toFixed(1)}%`,
+                                'Dropoff Ratio': `${(((neighborhood.dropoffs || neighborhood.pickups) / total) * 100).toFixed(1)}%`
+                            });
+                        }
+                    }
+                }
+            });
+
+            // Monthly Chart (Bar)
+            const monthlyCtx = document.getElementById('monthly-chart').getContext('2d');
+            const monthlyFiltered = monthlyData.filter(m => m.trip_count > 0);
+            
+            chartInstances.monthly = new Chart(monthlyCtx, {
+                type: 'bar',
+                data: {
+                    labels: monthlyFiltered.map(m => m.month_name || `Month ${m.pickup_month}`),
+                    datasets: [{
+                        label: 'TRIPS',
+                        data: monthlyFiltered.map(m => m.trip_count),
+                        backgroundColor: '#d4a574',
+                        borderColor: '#1a1a1a',
+                        borderWidth: 3,
+                        borderRadius: 0,
+                        borderSkipped: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                        ticks: {
+                            color: '#1a1a1a',
+                            font: {
+                                family: 'Public Sans',
+                                weight: 'bold',
+                                size: 12
+                            }
+                        },
+                        grid: {
+                            color: '#1a1a1a',
+                            lineWidth: 2
+                        }
+                        },
+                        y: {
+                            beginAtZero: true,
+                        ticks: {
+                            color: '#1a1a1a',
+                            font: {
+                                family: 'Public Sans',
+                                weight: 'bold',
+                                size: 12
+                            }
+                        },
+                        grid: {
+                            color: '#1a1a1a',
+                            lineWidth: 2
+                        }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                        labels: {
+                            color: '#1a1a1a',
+                            font: {
+                                family: 'Lexend Mega',
+                                weight: 'bold',
+                                size: 14
+                            },
+                            usePointStyle: true,
+                            pointStyle: 'rect',
+                            padding: 20
+                        }
+                        }
+                    },
+                    onClick: (event, elements) => {
+                        if (elements.length > 0) {
+                            const index = elements[0].index;
+                            const month = monthlyFiltered[index];
+                            showChartDetail('Monthly Analysis', month.month_name || `Month ${month.pickup_month}`, {
+                                'Total Trips': month.trip_count.toLocaleString(),
+                                'Avg Duration': `${(month.avg_duration / 60).toFixed(1)} min`,
+                                'Avg Distance': `${month.avg_distance.toFixed(2)} km`,
+                                'Avg Speed': `${month.avg_speed.toFixed(1)} km/h`,
+                                'Total Passengers': month.total_passengers.toLocaleString()
+                            });
+                        }
+                    }
+                }
+            });
+
+            // Hourly Chart (Line)
+            const hourlyCtx = document.getElementById('hourly-chart').getContext('2d');
+            chartInstances.hourly = new Chart(hourlyCtx, {
+                type: 'line',
+                data: {
+                    labels: hourlyData.map(h => `${h.pickup_hour}:00`),
+                    datasets: [{
+                        label: 'TRIPS',
+                        data: hourlyData.map(h => h.trip_count),
+                        borderColor: '#1a1a1a',
+                        backgroundColor: '#d4a574',
+                        borderWidth: 4,
+                        fill: true,
+                        tension: 0.2,
+                        pointBackgroundColor: '#1a1a1a',
+                        pointBorderColor: '#1a1a1a',
+                        pointBorderWidth: 3,
+                        pointRadius: 6,
+                        pointHoverRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                        ticks: {
+                            color: '#1a1a1a',
+                            font: {
+                                family: 'Public Sans',
+                                weight: 'bold',
+                                size: 12
+                            }
+                        },
+                        grid: {
+                            color: '#1a1a1a',
+                            lineWidth: 2
+                        }
+                        },
+                        y: {
+                            beginAtZero: true,
+                        ticks: {
+                            color: '#1a1a1a',
+                            font: {
+                                family: 'Public Sans',
+                                weight: 'bold',
+                                size: 12
+                            }
+                        },
+                        grid: {
+                            color: '#1a1a1a',
+                            lineWidth: 2
+                        }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top',
+                        labels: {
+                            color: '#1a1a1a',
+                            font: {
+                                family: 'Lexend Mega',
+                                weight: 'bold',
+                                size: 14
+                            },
+                            usePointStyle: true,
+                            pointStyle: 'rect',
+                            padding: 20
+                        }
+                        }
+                    },
+                    onClick: (event, elements) => {
+                        if (elements.length > 0) {
+                            const index = elements[0].index;
+                            const hour = hourlyData[index];
+                            showChartDetail('Hourly Analysis', `${hour.pickup_hour}:00 - ${(hour.pickup_hour + 1) % 24}:00`, {
+                                'Total Trips': hour.trip_count.toLocaleString(),
+                                'Avg Duration': `${(hour.avg_duration / 60).toFixed(1)} min`,
+                                'Avg Distance': `${hour.avg_distance.toFixed(2)} km`,
+                                'Avg Speed': `${hour.avg_speed.toFixed(1)} km/h`,
+                                'Total Passengers': hour.total_passengers.toLocaleString()
+                            });
+                        }
+                    }
+                }
+            });
+
+            // Fare Chart (Doughnut)
+            if (fareData && fareData.length > 0) {
+                const fareCtx = document.getElementById('fare-chart').getContext('2d');
+                
+                // Filter out Budget category (too few trips to show meaningfully)
+                const filteredFares = fareData.filter(f => f.category !== 'Budget');
+                const total = filteredFares.reduce((sum, f) => sum + f.tripCount, 0);
+                
+                chartInstances.fare = new Chart(fareCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: filteredFares.map(f => `${f.category} ($${f.avgFare.toFixed(2)}/km)`),
+                        datasets: [{
+                            label: 'TRIPS',
+                            data: filteredFares.map(f => f.tripCount),
+                            backgroundColor: [
+                                '#2c7a7b',   // Teal - Data
+                                '#c97064',   // Muted Terracotta - Location
+                                '#d4a574',   // Muted Gold - Time
+                                '#6b5b95'    // Muted Purple - Performance
+                            ],
+                            borderColor: [
+                                '#1a1a1a',
+                                '#1a1a1a',
+                                '#1a1a1a',
+                                '#1a1a1a'
+                            ],
+                            borderWidth: 4,
+                            hoverOffset: 15,
+                            cutout: '60%'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    color: '#1a1a1a000',
+                                    padding: 20,
+                                    font: {
+                                        family: 'Lexend Mega',
+                                        size: 12,
+                                        weight: 'bold'
+                                    },
+                                    usePointStyle: true,
+                                    pointStyle: 'rect'
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const label = context.label || '';
+                                        const value = context.parsed || 0;
+                                        const percentage = ((value / total) * 100).toFixed(1);
+                                        return `${label}: ${value.toLocaleString()} trips (${percentage}%)`;
+                                    }
+                                }
+                            }
+                        },
+                        onClick: (event, elements) => {
+                            if (elements.length > 0) {
+                                const index = elements[0].index;
+                                const fare = filteredFares[index];
+                                const percentage = ((fare.tripCount / total) * 100).toFixed(1);
+                                showChartDetail('Fare Analysis', fare.category, {
+                                    'Total Trips': fare.tripCount.toLocaleString(),
+                                    'Percentage': `${percentage}%`,
+                                    'Avg Fare/km': `$${fare.avgFare.toFixed(2)}`,
+                                    'Avg Distance': `${fare.avgDistance.toFixed(2)} km`,
+                                    'Est. Trip Cost': `$${(fare.avgFare * fare.avgDistance).toFixed(2)}`
+                                });
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        // Show chart detail modal
+        function showChartDetail(chartType, itemName, stats) {
+            // Create backdrop
+            let backdrop = document.getElementById('chart-detail-backdrop');
+            if (!backdrop) {
+                backdrop = document.createElement('div');
+                backdrop.id = 'chart-detail-backdrop';
+                backdrop.className = 'chart-detail-backdrop';
+                backdrop.onclick = closeChartDetail;
+                document.body.appendChild(backdrop);
+            }
+            
+            // Create modal
+            let modal = document.getElementById('chart-detail-modal');
+            if (!modal) {
+                modal = document.createElement('div');
+                modal.id = 'chart-detail-modal';
+                modal.className = 'chart-detail-modal';
+                document.body.appendChild(modal);
+            }
+            
+            // Build content
+            let statsHtml = '';
+            for (const [key, value] of Object.entries(stats)) {
+                statsHtml += `
+                    <div class="detail-stat">
+                        <span class="detail-stat-label">${key}</span>
+                        <span class="detail-stat-value">${value}</span>
+                    </div>
+                `;
+            }
+            
+            modal.innerHTML = `
+                <div class="chart-detail-header">
+                    <h3>${chartType}: ${itemName}</h3>
+                    <button class="chart-detail-close" onclick="closeChartDetail()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="chart-detail-content">
+                    ${statsHtml}
+                </div>
+            `;
+        }
+
+        // Close chart detail modal
+        function closeChartDetail() {
+            const modal = document.getElementById('chart-detail-modal');
+            const backdrop = document.getElementById('chart-detail-backdrop');
+            if (modal) modal.remove();
+            if (backdrop) backdrop.remove();
+        }
+        
+
+        // Initialize maps
+        async function initializeMaps() {
+            try {
+                const mapContainer = document.getElementById('main-map');
+                if (!mapContainer) {
+                    console.error('Map container not found');
+                    return;
+                }
+
+                // Wait for MapTiler API key to load
+                if (CONFIG.MAPTILER_API_KEY === 'loading...') {
+                    await new Promise(resolve => {
+                        const checkConfig = setInterval(() => {
+                            if (CONFIG.MAPTILER_API_KEY !== 'loading...') {
+                                clearInterval(checkConfig);
+                                resolve();
+                            }
+                        }, 100);
+                    });
+                }
+
+                const maptilerKey = CONFIG.MAPTILER_API_KEY;
+
+                map = new maplibregl.Map({
+                    container: 'main-map',
+                    style: `https://api.maptiler.com/maps/dataviz/style.json?key=${maptilerKey}`,
+                    center: [initialViewState.longitude, initialViewState.latitude],
+                    zoom: initialViewState.zoom,
+                    pitch: initialViewState.pitch,
+                    bearing: initialViewState.bearing
+                });
+                
+                console.log('Map initialized with MapTiler DataViz');
+
+                map.on('load', async () => {
+                    console.log('Map loaded, fetching H3 grid data...');
+                    await loadTripData();
+                });
+
+                // Track building visibility and camera state
+                window.lastBuildingsVisible = false;
+                window.lastStreetLevelState = false;
+                
+                // Check if camera is at street level
+                function isAtStreetLevel() {
+                    const pitch = map.getPitch();
+                    const zoom = map.getZoom();
+                    // Street level when pitch is very high (>= 70) or zoom is very close (>= 17)
+                    return pitch >= 70 || zoom >= 17;
+                }
+                
+                // Update layers when camera position changes
+                function checkAndUpdateLayers() {
+                    const currentZoom = map.getZoom();
+                    const buildingsVisible = currentZoom >= 15;
+                    const streetLevel = isAtStreetLevel();
+                    
+                    // Check if any state changed
+                    const buildingStateChanged = buildingsVisible !== window.lastBuildingsVisible;
+                    const streetLevelChanged = streetLevel !== window.lastStreetLevelState;
+                    
+                    if (buildingStateChanged || streetLevelChanged) {
+                        console.log(`State change - Buildings: ${buildingsVisible}, Street Level: ${streetLevel}`);
+                        window.lastBuildingsVisible = buildingsVisible;
+                        window.lastStreetLevelState = streetLevel;
+                        
+                        // Small delay to ensure animation is complete
+                        setTimeout(() => {
+                            updateDeckLayers();
+                        }, 100);
+                    }
+                }
+                
+                // Listen to both zoom and pitch changes
+                map.on('zoomend', checkAndUpdateLayers);
+                map.on('pitchend', checkAndUpdateLayers);
+            } catch (error) {
+                console.error('Error initializing map:', error);
+            }
+        }
+
+        // Fixed H3 resolution for consistent hexagon size across all zoom levels
+        function getH3Resolution() {
+            // Use resolution 9 (~100m hex) for consistent, visible hexagons
+            // This keeps the same hexagons across all zoom levels
+            return 9;
+        }
+
+        // Load H3 aggregated grid data with caching for faster performance
+        async function loadTripData() {
+            try {
+                const resolution = getH3Resolution();
+                
+                // Build cache key from filters
+                const cacheKey = JSON.stringify({ resolution, ...currentFilters });
+                
+                // Check cache first
+                if (h3GridCache.has(cacheKey)) {
+                    console.log('Using cached H3 grid data');
+                    tripsData = h3GridCache.get(cacheKey);
+                    updateDeckLayers();
+                    return;
+                }
+                
+                // Use preloaded data for initial load (no filters, resolution 9)
+                const hasNoFilters = !currentFilters.startDate && !currentFilters.endDate && 
+                                    !currentFilters.neighborhood && currentFilters.startHour === undefined && 
+                                    currentFilters.endHour === undefined && !currentFilters.month && 
+                                    currentFilters.minDistance === undefined && currentFilters.maxDistance === undefined;
+                
+                if (hasNoFilters && resolution === 9 && preloadedData.h3Grid && preloadedData.h3Grid.length > 0) {
+                    console.log('Using preloaded H3 grid data (instant map!)');
+                    h3GridCache.set(cacheKey, preloadedData.h3Grid);
+                    tripsData = preloadedData.h3Grid;
+                    updateDeckLayers();
+                    return;
+                }
+                
+                const params = new URLSearchParams();
+                params.append('resolution', resolution);
+                params.append('includeGeometry', 'false'); // Don't need geometry, saves bandwidth
+                
+                if (currentFilters.startDate) params.append('startDate', currentFilters.startDate);
+                if (currentFilters.endDate) params.append('endDate', currentFilters.endDate);
+                if (currentFilters.neighborhood) params.append('neighborhood', currentFilters.neighborhood);
+                if (currentFilters.startHour !== undefined) params.append('startHour', currentFilters.startHour);
+                if (currentFilters.endHour !== undefined) params.append('endHour', currentFilters.endHour);
+                if (currentFilters.month) params.append('month', currentFilters.month);
+                if (currentFilters.minDistance !== undefined) params.append('minDistance', currentFilters.minDistance);
+                if (currentFilters.maxDistance !== undefined) params.append('maxDistance', currentFilters.maxDistance);
+                
+                console.log(`Loading H3 grid data at resolution ${resolution}`);
+                const response = await fetch(`${API_BASE}/trips/h3-grid?${params.toString()}`, {
+                    headers: { 'X-API-Key': CONFIG.API_KEY }
+                });
+                const result = await response.json();
+                
+                if (result.success && result.data) {
+                    tripsData = result.data;
+                    
+                    // Cache the result
+                    h3GridCache.set(cacheKey, tripsData);
+                    
+                    // Limit cache size to 10 entries
+                    if (h3GridCache.size > 10) {
+                        const firstKey = h3GridCache.keys().next().value;
+                        h3GridCache.delete(firstKey);
+                    }
+                    
+                    console.log(`Loaded ${tripsData.length} H3 cells (cached)`);
+                    updateDeckLayers();
+                }
+            } catch (error) {
+                console.error('Error loading H3 grid data:', error);
+            }
+        }
+
+        // Update Deck.gl layers with H3 hexagons (MUCH more efficient!)
+        function updateDeckLayers() {
+            console.log(`Updating deck layers with ${tripsData.length} H3 cells`);
+            console.log('Current layer visibility:', currentLayer);
+            console.log('Current view mode:', currentViewMode);
+            
+            // Validate and filter out invalid H3 cells
+            // Log first cell to see data structure
+            if (tripsData.length > 0) {
+                console.log('Sample H3 cell data:', tripsData[0]);
+            }
+            
+            const validTripsData = tripsData.filter(d => {
+                // Must have H3 index
+                if (!d || !d.h3 || typeof d.h3 !== 'string') return false;
+                
+                // Must have valid pickup/dropoff counts
+                if (typeof d.pickups !== 'number' || typeof d.dropoffs !== 'number') return false;
+                if (isNaN(d.pickups) || isNaN(d.dropoffs)) return false;
+                
+                // Validate H3 index format (should be 15 characters hex string)
+                if (d.h3.length !== 15) return false;
+                if (!/^[0-9a-f]{15}$/i.test(d.h3)) return false;
+                
+                // Try to validate the H3 cell is valid by checking if h3-js can use it
+                try {
+                    // Use h3-js to validate (it will throw if invalid)
+                    if (typeof h3 !== 'undefined' && h3.isValidCell) {
+                        return h3.isValidCell(d.h3);
+                    }
+                    return true; // If h3-js not available, assume valid
+                } catch (e) {
+                    console.warn('Invalid H3 cell:', d.h3, e);
+                    return false;
+                }
+            });
+            
+            const invalidCount = tripsData.length - validTripsData.length;
+            if (invalidCount > 0) {
+                console.warn(`Filtered out ${invalidCount} H3 cells with invalid data`);
+            }
+            
+            console.log(`Using ${validTripsData.length} valid H3 cells`);
+            
+            // Detect if buildings are visible and camera is at street level
+            const currentZoom = map.getZoom();
+            const currentPitch = map.getPitch();
+            const buildingsVisible = currentZoom >= 15;
+            const atStreetLevel = currentPitch >= 70 || currentZoom >= 17;
+            
+            // Street highlight mode: when buildings visible OR at street level (camera touches hexagons)
+            const streetHighlightMode = (currentViewMode === '2d' && buildingsVisible) || atStreetLevel;
+            const show3DHeights = currentViewMode === '3d' && !streetHighlightMode;
+            
+            console.log(`Zoom: ${currentZoom.toFixed(1)}, Pitch: ${currentPitch.toFixed(1)}°, Street Level: ${atStreetLevel}, Street Highlight: ${streetHighlightMode}`);
+            
+            // Filter to show only top hexagons with most data
+            // Calculate percentile threshold - show top 30% of cells
+            const sortedByPickups = [...validTripsData].sort((a, b) => b.pickups - a.pickups);
+            const sortedByDropoffs = [...validTripsData].sort((a, b) => b.dropoffs - a.dropoffs);
+            
+            const pickupThresholdIndex = Math.floor(sortedByPickups.length * 0.3);
+            const dropoffThresholdIndex = Math.floor(sortedByDropoffs.length * 0.3);
+            
+            const pickupThreshold = sortedByPickups[pickupThresholdIndex]?.pickups || 0;
+            const dropoffThreshold = sortedByDropoffs[dropoffThresholdIndex]?.dropoffs || 0;
+            
+            // Filter data to only show high-activity cells
+            const highActivityPickups = validTripsData.filter(d => d.pickups >= pickupThreshold);
+            const highActivityDropoffs = validTripsData.filter(d => d.dropoffs >= dropoffThreshold);
+            
+            console.log(`Showing top ${highActivityPickups.length} pickup cells (threshold: ${pickupThreshold})`);
+            console.log(`Showing top ${highActivityDropoffs.length} dropoff cells (threshold: ${dropoffThreshold})`);
+            
+            // Calculate max pickups and dropoffs for height scaling
+            const maxPickups = Math.max(...highActivityPickups.map(d => d.pickups || 1));
+            const maxDropoffs = Math.max(...highActivityDropoffs.map(d => d.dropoffs || 1));
+            
+            // Pickup hexagon layer (muted terracotta)
+            const pickupLayer = new deck.H3HexagonLayer({
+                id: 'pickup-h3-layer',
+                data: highActivityPickups,
+                getHexagon: d => d.h3,
+                getFillColor: d => {
+                    if (streetHighlightMode) {
+                        // Street highlight: subtle
+                        return [201, 112, 100, 60];  // Muted Terracotta
+                    } else if (currentViewMode === '2d') {
+                        // 2D mode: solid, clean
+                        return [201, 112, 100, 220];  // Muted Terracotta
+                    } else {
+                        // 3D mode: semi-transparent
+                        return [201, 112, 100, 180];  // Muted Terracotta
+                    }
+                },
+                getElevation: show3DHeights ? (d => (d.pickups / maxPickups) * 5000) : 0,
+                elevationScale: show3DHeights ? (currentLayer === 'pickups' ? 2 : 1) : 0,
+                extruded: show3DHeights,
+                wireframe: false,
+                filled: true,
+                stroked: currentViewMode === '2d' || streetHighlightMode,
+                getLineColor: streetHighlightMode ? [34, 197, 94, 255] : [255, 255, 255, 255],
+                getLineWidth: currentViewMode === '2d' ? 2 : (streetHighlightMode ? 3 : 0),
+                lineWidthMinPixels: currentViewMode === '2d' ? 1.5 : (streetHighlightMode ? 2 : 0),
+                visible: currentLayer === 'both' || currentLayer === 'pickups',
+                pickable: true,
+                autoHighlight: true,
+                highlightColor: [255, 255, 255, 200],
+                onClick: (info) => {
+                    if (info.object) {
+                        showH3CellInfo(info.object, 'pickup');
+                    }
+                }
+            });
+
+            // Dropoff hexagon layer (muted purple)
+            const dropoffLayer = new deck.H3HexagonLayer({
+                id: 'dropoff-h3-layer',
+                data: highActivityDropoffs,
+                getHexagon: d => d.h3,
+                getFillColor: d => {
+                    if (streetHighlightMode) {
+                        // Street highlight: subtle
+                        return [107, 91, 149, 60];  // Muted Purple
+                    } else if (currentViewMode === '2d') {
+                        // 2D mode: solid, clean
+                        return [107, 91, 149, 220];  // Muted Purple
+                    } else {
+                        // 3D mode: semi-transparent
+                        return [107, 91, 149, 180];  // Muted Purple
+                    }
+                },
+                getElevation: show3DHeights ? (d => (d.dropoffs / maxDropoffs) * 5000) : 0,
+                elevationScale: show3DHeights ? (currentLayer === 'dropoffs' ? 2 : 1) : 0,
+                extruded: show3DHeights,
+                wireframe: false,
+                filled: true,
+                stroked: currentViewMode === '2d' || streetHighlightMode,
+                getLineColor: streetHighlightMode ? [236, 72, 153, 255] : [255, 255, 255, 255],
+                getLineWidth: currentViewMode === '2d' ? 2 : (streetHighlightMode ? 3 : 0),
+                lineWidthMinPixels: currentViewMode === '2d' ? 1.5 : (streetHighlightMode ? 2 : 0),
+                visible: currentLayer === 'both' || currentLayer === 'dropoffs',
+                pickable: true,
+                autoHighlight: true,
+                highlightColor: [255, 255, 255, 200],
+                onClick: (info) => {
+                    if (info.object) {
+                        showH3CellInfo(info.object, 'dropoff');
+                    }
+                }
+            });
+
+            if (!deckOverlay) {
+                deckOverlay = new deck.MapboxOverlay({
+                    interleaved: false, // Set to false to prevent z-fighting glitches
+                    layers: [pickupLayer, dropoffLayer],
+                    getTooltip: ({object, layer}) => {
+                        if (!object) return null;
+                        
+                        const isPickup = layer.id === 'pickup-h3-layer';
+                        const dominant = object.dominant_type === 'pickup' ? 'Pickup' : 'Dropoff';
+                        const dominantColor = object.dominant_type === 'pickup' ? '#c97064' : '#6b5b95';
+                        
+                        return {
+                            html: `
+                                <div style="background: #fff; padding: 14px; border: 3px solid #1a1a1a; box-shadow: 6px 6px 0 #1a1a1a; font-family: 'Public Sans', sans-serif; min-width: 220px;">
+                                    <div style="font-family: 'Lexend Mega', sans-serif; font-weight: 900; color: #1a1a1a; margin-bottom: 10px; font-size: 14px; border-bottom: 3px solid #1a1a1a; padding-bottom: 8px; text-transform: uppercase;">
+                                        H3 Cell - ${dominant} Area
+                                    </div>
+                                    <div style="font-size: 13px; color: #1a1a1a; font-weight: 600; line-height: 1.8;">
+                                        <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                                            <span><strong>Pickups:</strong></span>
+                                            <span style="color: #c97064; font-weight: 700;">${object.pickups.toLocaleString()}</span>
+                                        </div>
+                                        <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                                            <span><strong>Dropoffs:</strong></span>
+                                            <span style="color: #6b5b95; font-weight: 700;">${object.dropoffs.toLocaleString()}</span>
+                                        </div>
+                                        <div style="display: flex; justify-content: space-between; margin-bottom: 6px; padding-top: 6px; border-top: 1px solid #e5e7eb;">
+                                            <span><strong>Total:</strong></span>
+                                            <span style="color: #8b5cf6; font-weight: 700;">${object.total.toLocaleString()}</span>
+                                        </div>
+                                        <div style="margin-top: 8px; padding: 8px; background: #d4a574; border: 2px solid #1a1a1a; font-size: 11px; color: #1a1a1a; font-weight: 700;">
+                                            <div><strong>Coordinates:</strong> ${object.center.lat.toFixed(4)}, ${object.center.lng.toFixed(4)}</div>
+                                            <div style="margin-top: 4px; color: #1a1a1a; font-weight: 700; cursor: pointer; text-transform: uppercase;">
+                                                Click for detailed statistics →
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            `,
+                            style: {
+                                backgroundColor: 'transparent',
+                                fontSize: '13px'
+                            }
+                        };
+                    }
+                });
+                map.addControl(deckOverlay);
+                console.log('Deck overlay created with H3 hexagon layers');
+            } else {
+                deckOverlay.setProps({
+                    layers: [pickupLayer, dropoffLayer]
+                });
+                console.log('Deck overlay updated with new H3 hexagon layers');
+            }
+        }
+        
+        // Show detailed trip information panel
+        function showTripInfo(trip, clickType) {
+            const pickupDate = new Date(trip.pickup_datetime);
+            const dropoffDate = new Date(trip.dropoff_datetime);
+            const durationMinutes = ((dropoffDate - pickupDate) / 1000 / 60).toFixed(1);
+            
+            const formattedPickup = pickupDate.toLocaleString('en-US', {
+                month: 'short', day: 'numeric', year: 'numeric',
+                hour: '2-digit', minute: '2-digit'
+            });
+            
+            const formattedDropoff = dropoffDate.toLocaleString('en-US', {
+                hour: '2-digit', minute: '2-digit'
+            });
+            
+            // Create or update info panel
+            let panel = document.getElementById('trip-info-panel');
+            if (!panel) {
+                panel = document.createElement('div');
+                panel.id = 'trip-info-panel';
+                panel.style.cssText = `
+                    position: fixed;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    background: #fff;
+                    padding: 2rem;
+                    border: 4px solid #1a1a1a;
+                    box-shadow: 12px 12px 0 #1a1a1a;
+                    z-index: 10000;
+                    min-width: 400px;
+                    max-width: 500px;
+                    font-family: 'Public Sans', sans-serif;
+                    animation: slideIn 0.3s ease;
+                `;
+                document.body.appendChild(panel);
+                
+                // Add animation
+                const style = document.createElement('style');
+                style.textContent = `
+                    @keyframes slideIn {
+                        from { opacity: 0; transform: translate(-50%, -45%); }
+                        to { opacity: 1; transform: translate(-50%, -50%); }
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+            
+            panel.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1.5rem;">
+                    <h3 style="margin: 0; color: #1a1a1a; font-family: 'Lexend Mega', sans-serif; font-size: 1.5rem; font-weight: 900; text-transform: uppercase;">
+                        🚕 Trip #${trip.id}
+                    </h3>
+                    <button onclick="closeTripInfo()" 
+                            style="background: #c97064; border: 3px solid #1a1a1a; box-shadow: 2px 2px 0 #1a1a1a; width: 32px; height: 32px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s cubic-bezier(0.77, 0, 0.18, 1);">
+                        <i class="fas fa-times" style="color: #fff;"></i>
+                    </button>
+                </div>
+                
+                <div style="background: #2c7a7b; padding: 1rem; border: 3px solid #1a1a1a; box-shadow: 4px 4px 0 #1a1a1a; margin-bottom: 1.5rem;">
+                    <div style="color: #fff; font-family: 'Lexend Mega', sans-serif; font-weight: 900; font-size: 0.875rem; text-transform: uppercase; letter-spacing: 0.05em;">
+                        ${trip.vendor_name}
+                    </div>
+                </div>
+                
+                <div style="display: grid; gap: 1rem;">
+                    <div style="background: #fff; padding: 1rem; border: 3px solid #1a1a1a; box-shadow: 3px 3px 0 #1a1a1a; border-left: 6px solid #6b5b95;">
+                        <div style="font-family: 'Lexend Mega', sans-serif; font-weight: 900; color: #1a1a1a; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem; text-transform: uppercase; font-size: 0.875rem;">
+                            <i class="fas fa-map-marker-alt"></i> Pickup Location
+                        </div>
+                        <div style="color: #1a1a1a; font-family: 'Public Sans', sans-serif; font-size: 0.875rem; font-weight: 600;">
+                            <div><strong>Coordinates:</strong> ${parseFloat(trip.pickup_latitude).toFixed(6)}, ${parseFloat(trip.pickup_longitude).toFixed(6)}</div>
+                            <div><strong>Time:</strong> ${formattedPickup}</div>
+                        </div>
+                    </div>
+                    
+                    <div style="background: #fff; padding: 1rem; border: 3px solid #1a1a1a; box-shadow: 3px 3px 0 #1a1a1a; border-left: 6px solid #2c7a7b;">
+                        <div style="font-family: 'Lexend Mega', sans-serif; font-weight: 900; color: #1a1a1a; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem; text-transform: uppercase; font-size: 0.875rem;">
+                            <i class="fas fa-map-marker-alt"></i> Dropoff Location
+                        </div>
+                        <div style="color: #1a1a1a; font-family: 'Public Sans', sans-serif; font-size: 0.875rem; font-weight: 600;">
+                            <div><strong>Coordinates:</strong> ${parseFloat(trip.dropoff_latitude).toFixed(6)}, ${parseFloat(trip.dropoff_longitude).toFixed(6)}</div>
+                            <div><strong>Time:</strong> ${formattedDropoff}</div>
+                        </div>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div style="background: #d4a574; padding: 1rem; border: 3px solid #1a1a1a; box-shadow: 3px 3px 0 #1a1a1a; text-align: center;">
+                            <div style="font-family: 'Lexend Mega', sans-serif; font-size: 1.75rem; font-weight: 900; color: #1a1a1a;">
+                                ${parseFloat(trip.distance_km).toFixed(2)}
+                            </div>
+                            <div style="font-family: 'Public Sans', sans-serif; font-size: 0.75rem; color: #1a1a1a; font-weight: 700; text-transform: uppercase;">
+                                Kilometers
+                            </div>
+                        </div>
+                        <div style="background: #6b5b95; padding: 1rem; border: 3px solid #1a1a1a; box-shadow: 3px 3px 0 #1a1a1a; text-align: center;">
+                            <div style="font-family: 'Lexend Mega', sans-serif; font-size: 1.75rem; font-weight: 900; color: #fff;">
+                                ${durationMinutes}
+                            </div>
+                            <div style="font-family: 'Public Sans', sans-serif; font-size: 0.75rem; color: #fff; font-weight: 700; text-transform: uppercase;">
+                                Minutes
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 0.5rem; padding: 1rem; background: #fff; border: 3px solid #1a1a1a; box-shadow: 3px 3px 0 #1a1a1a;">
+                        <div style="font-family: 'Lexend Mega', sans-serif; font-size: 0.75rem; color: #1a1a1a; font-weight: 900; margin-bottom: 0.5rem; text-transform: uppercase;">
+                            TRIP DETAILS
+                        </div>
+                        <div style="font-family: 'Public Sans', sans-serif; font-size: 0.875rem; color: #1a1a1a; font-weight: 600; line-height: 1.8;">
+                            <div><strong>Trip ID:</strong> ${trip.id}</div>
+                            <div><strong>Clicked:</strong> ${clickType === 'pickup' ? 'Pickup point' : 'Dropoff point'}</div>
+                            <div><strong>Avg Speed:</strong> ${(parseFloat(trip.distance_km) / (durationMinutes / 60)).toFixed(1)} km/h</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 3px solid #1a1a1a; text-align: center;">
+                    <button onclick="flyToTrip(${trip.id})" 
+                            style="background: #2c7a7b; color: #fff; border: 3px solid #1a1a1a; box-shadow: 4px 4px 0 #1a1a1a; padding: 0.75rem 1.5rem; font-family: 'Lexend Mega', sans-serif; font-weight: 900; cursor: pointer; transition: all 0.15s cubic-bezier(0.77, 0, 0.18, 1); text-transform: uppercase;">
+                        <i class="fas fa-map-marked-alt"></i> Show on Map
+                    </button>
+                </div>
+            `;
+            
+            // Add backdrop
+            let backdrop = document.getElementById('trip-info-backdrop');
+            if (!backdrop) {
+                backdrop = document.createElement('div');
+                backdrop.id = 'trip-info-backdrop';
+                backdrop.style.cssText = `
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background: rgba(0, 0, 0, 0.5);
+                    z-index: 9999;
+                    backdrop-filter: blur(4px);
+                `;
+                backdrop.onclick = () => {
+                    panel.remove();
+                    backdrop.remove();
+                };
+                document.body.appendChild(backdrop);
+            }
+        }
+        
+        // Show H3 cell information panel
+        function showH3CellInfo(cell, clickType) {
+            const dominantType = cell.dominant_type === 'pickup' ? 'Pickup' : 'Dropoff';
+            const dominantColor = cell.dominant_type === 'pickup' ? '#22c55e' : '#ec4899';
+            const pickupRatio = (cell.pickup_ratio * 100).toFixed(1);
+            const dropoffRatio = (cell.dropoff_ratio * 100).toFixed(1);
+            
+            // Create or update info panel
+            let panel = document.getElementById('trip-info-panel');
+            if (!panel) {
+                panel = document.createElement('div');
+                panel.id = 'trip-info-panel';
+                panel.style.cssText = `
+                    position: fixed;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    background: #fff;
+                    padding: 2rem;
+                    border: 4px solid #1a1a1a;
+                    box-shadow: 12px 12px 0 #1a1a1a;
+                    z-index: 10000;
+                    min-width: 450px;
+                    max-width: 550px;
+                    font-family: 'Public Sans', sans-serif;
+                    animation: slideIn 0.3s ease;
+                `;
+                document.body.appendChild(panel);
+                
+                // Add animation
+                const style = document.createElement('style');
+                style.textContent = `
+                    @keyframes slideIn {
+                        from { opacity: 0; transform: translate(-50%, -45%); }
+                        to { opacity: 1; transform: translate(-50%, -50%); }
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+            
+            panel.innerHTML = `
+                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1.5rem;">
+                    <h3 style="margin: 0; color: #1a1a1a; font-family: 'Lexend Mega', sans-serif; font-size: 1.5rem; font-weight: 900; text-transform: uppercase;">
+                        📍 H3 Hexagon Cell
+                    </h3>
+                    <button onclick="closeTripInfo()" 
+                            style="background: #c97064; border: 3px solid #1a1a1a; box-shadow: 2px 2px 0 #1a1a1a; width: 32px; height: 32px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s cubic-bezier(0.77, 0, 0.18, 1);">
+                        <i class="fas fa-times" style="color: #fff;"></i>
+                    </button>
+                </div>
+                
+                <div style="background: ${dominantColor}; padding: 1.25rem; border: 3px solid #1a1a1a; box-shadow: 4px 4px 0 #1a1a1a; margin-bottom: 1.5rem;">
+                    <div style="color: #1a1a1a; font-family: 'Lexend Mega', sans-serif; font-weight: 900; font-size: 1rem; text-transform: uppercase; letter-spacing: 0.05em;">
+                        ${dominantType} Dominant Area
+                    </div>
+                    <div style="color: #1a1a1a; font-family: 'Public Sans', sans-serif; font-size: 0.875rem; font-weight: 600; margin-top: 0.25rem;">
+                        H3 Cell ID: ${cell.h3.substring(0, 12)}...
+                    </div>
+                </div>
+                
+                <div style="display: grid; gap: 1rem;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div style="background: #6b5b95; padding: 1.25rem; border: 3px solid #1a1a1a; box-shadow: 4px 4px 0 #1a1a1a; text-align: center;">
+                            <div style="font-family: 'Lexend Mega', sans-serif; font-size: 2rem; font-weight: 900; color: #fff;">
+                                ${cell.pickups.toLocaleString()}
+                            </div>
+                            <div style="font-family: 'Public Sans', sans-serif; font-size: 0.875rem; color: #fff; font-weight: 700; text-transform: uppercase; margin-top: 0.25rem;">
+                                Pickups
+                            </div>
+                            <div style="font-family: 'Public Sans', sans-serif; font-size: 0.75rem; color: #fff; font-weight: 600; margin-top: 0.5rem; opacity: 0.9;">
+                                ${pickupRatio}% of total
+                            </div>
+                        </div>
+                        <div style="background: #c97064; padding: 1.25rem; border: 3px solid #1a1a1a; box-shadow: 4px 4px 0 #1a1a1a; text-align: center;">
+                            <div style="font-family: 'Lexend Mega', sans-serif; font-size: 2rem; font-weight: 900; color: #fff;">
+                                ${cell.dropoffs.toLocaleString()}
+                            </div>
+                            <div style="font-family: 'Public Sans', sans-serif; font-size: 0.875rem; color: #fff; font-weight: 700; text-transform: uppercase; margin-top: 0.25rem;">
+                                Dropoffs
+                            </div>
+                            <div style="font-family: 'Public Sans', sans-serif; font-size: 0.75rem; color: #fff; font-weight: 600; margin-top: 0.5rem;">
+                                ${dropoffRatio}% of total
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="background: #2c7a7b; padding: 1.25rem; border: 3px solid #1a1a1a; box-shadow: 4px 4px 0 #1a1a1a; text-align: center;">
+                        <div style="font-family: 'Lexend Mega', sans-serif; font-size: 2.5rem; font-weight: 900; color: #fff;">
+                            ${cell.total.toLocaleString()}
+                        </div>
+                        <div style="font-family: 'Public Sans', sans-serif; font-size: 0.875rem; color: #fff; font-weight: 700; text-transform: uppercase;">
+                            Total Trips
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 0.5rem; padding: 1.25rem; background: #fff; border: 3px solid #1a1a1a; box-shadow: 3px 3px 0 #1a1a1a;">
+                        <div style="font-family: 'Lexend Mega', sans-serif; font-size: 0.75rem; color: #1a1a1a; font-weight: 900; margin-bottom: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em;">
+                            📌 Location Details
+                        </div>
+                        <div style="font-family: 'Public Sans', sans-serif; font-size: 0.875rem; color: #1a1a1a; font-weight: 600; line-height: 1.8;">
+                            <div><strong>Center Latitude:</strong> ${cell.center.lat.toFixed(6)}</div>
+                            <div><strong>Center Longitude:</strong> ${cell.center.lng.toFixed(6)}</div>
+                            <div><strong>H3 Index:</strong> <code style="background: #d4a574; padding: 2px 6px; border: 2px solid #1a1a1a; font-size: 0.75rem; font-family: monospace;">${cell.h3}</code></div>
+                            <div><strong>Clicked Layer:</strong> ${clickType === 'pickup' ? 'Pickup layer' : 'Dropoff layer'}</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 3px solid #1a1a1a; display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                    <button onclick="flyToH3Cell('${cell.h3}', ${cell.center.lat}, ${cell.center.lng})" 
+                            style="background: #0077b6; color: #fff; border: 3px solid #1a1a1a; box-shadow: 4px 4px 0 #1a1a1a; padding: 0.875rem 1.25rem; font-family: 'Lexend Mega', sans-serif; font-weight: 900; cursor: pointer; transition: all 0.15s cubic-bezier(0.77, 0, 0.18, 1); font-size: 0.875rem; text-transform: uppercase;">
+                        <i class="fas fa-map-marked-alt"></i> Zoom to Cell
+                    </button>
+                    <button onclick="closeTripInfo()" 
+                            style="background: #fff; color: #1a1a1a; border: 3px solid #1a1a1a; box-shadow: 4px 4px 0 #1a1a1a; padding: 0.875rem 1.25rem; font-family: 'Lexend Mega', sans-serif; font-weight: 900; cursor: pointer; transition: all 0.15s cubic-bezier(0.77, 0, 0.18, 1); font-size: 0.875rem; text-transform: uppercase;">
+                        <i class="fas fa-times"></i> Close
+                    </button>
+                </div>
+            `;
+            
+            // Add backdrop
+            let backdrop = document.getElementById('trip-info-backdrop');
+            if (!backdrop) {
+                backdrop = document.createElement('div');
+                backdrop.id = 'trip-info-backdrop';
+                backdrop.style.cssText = `
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background: rgba(0, 0, 0, 0.5);
+                    z-index: 9999;
+                    backdrop-filter: blur(4px);
+                `;
+                backdrop.onclick = () => {
+                    panel.remove();
+                    backdrop.remove();
+                };
+                document.body.appendChild(backdrop);
+            }
+        }
+        
+        // Close trip info panel
+        function closeTripInfo() {
+            const panel = document.getElementById('trip-info-panel');
+            const backdrop = document.getElementById('trip-info-backdrop');
+            if (panel) panel.remove();
+            if (backdrop) backdrop.remove();
+        }
+        
+        // Fly to H3 cell location on map
+        function flyToH3Cell(h3Index, lat, lng) {
+            if (map) {
+                // Close the info panel first
+                closeTripInfo();
+                
+                // Fly to the cell location
+                map.flyTo({
+                    center: [lng, lat],
+                    zoom: 14,
+                    pitch: 60,
+                    duration: 2000
+                });
+            }
+        }
+        
+        // Fly to trip location on map
+        function flyToTrip(tripId) {
+            const trip = tripsData.find(t => t.id === tripId);
+            if (trip && map) {
+                // Close the info panel first
+                closeTripInfo();
+                
+                // Fly to the trip location
+                map.flyTo({
+                    center: [parseFloat(trip.pickup_longitude), parseFloat(trip.pickup_latitude)],
+                    zoom: 15,
+                    pitch: 60,
+                    duration: 2000
+                });
+            }
+        }
+
+        // Parameter functions
+        async function loadParameterOptions() {
+            try {
+                const [paramResponse, neighborhoodResponse] = await Promise.all([
+                    fetch(`${API_BASE}/parameters/options`),
+                    fetch(`${API_BASE}/trips/neighborhoods`)
+                ]);
+                
+                const paramResult = await paramResponse.json();
+                const neighborhoodResult = await neighborhoodResponse.json();
+                
+                if (paramResult.success) {
+                    parameterOptions = paramResult.data;
+                    
+                    if (neighborhoodResult.success && neighborhoodResult.data) {
+                        parameterOptions.neighborhoods = neighborhoodResult.data.map(n => ({
+                            name: n.name,
+                            tripCount: n.pickups + n.dropoffs,
+                            percentage: ((n.pickups + n.dropoffs) / 1448852 * 100).toFixed(1)
+                        }));
+                    }
+                    
+                    populateParameterControls();
+                    setDefaultValues();
+                }
+            } catch (error) {
+                console.error('Error loading parameter options:', error);
+            }
+        }
+
+        function populateParameterControls() {
+            const neighborhoodSelect = document.getElementById('neighborhoodSelect');
+            if (parameterOptions.neighborhoods) {
+                parameterOptions.neighborhoods.forEach(neighborhood => {
+                    const option = document.createElement('option');
+                    option.value = neighborhood.name;
+                    option.textContent = `${neighborhood.name} (${neighborhood.percentage}%)`;
+                    neighborhoodSelect.appendChild(option);
+                });
+            }
+
+            const monthSelect = document.getElementById('monthSelect');
+            if (parameterOptions.months) {
+                parameterOptions.months.forEach(month => {
+                    const option = document.createElement('option');
+                    option.value = month.month;
+                    option.textContent = `${month.label} (${month.percentage}%)`;
+                    monthSelect.appendChild(option);
+                });
+            }
+        }
+
+        function setDefaultValues() {
+            if (parameterOptions.dateRange) {
+                const formatDate = (isoDate) => {
+                    const date = new Date(isoDate);
+                    return date.toISOString().split('T')[0];
+                };
+                
+                document.getElementById('startDate').value = formatDate(parameterOptions.dateRange.defaultStart);
+                document.getElementById('endDate').value = formatDate(parameterOptions.dateRange.defaultEnd);
+            }
+        }
+
+        function getCurrentFilters() {
+            return {
+                startDate: document.getElementById('startDate').value || null,
+                endDate: document.getElementById('endDate').value || null,
+                neighborhood: document.getElementById('neighborhoodSelect').value || null,
+                startHour: parseInt(document.getElementById('startHour').value),
+                endHour: parseInt(document.getElementById('endHour').value),
+                month: document.getElementById('monthSelect').value || null,
+                minDistance: parseFloat(document.getElementById('minDistance').value),
+                maxDistance: parseFloat(document.getElementById('maxDistance').value)
+            };
+        }
+
+        async function applyFilters() {
+            const filters = getCurrentFilters();
+            currentFilters = filters;
+            
+            try {
+                console.log('Applying filters...');
+                await loadAllData(filters);
+                await loadTripData();
+                console.log('Filters applied successfully');
+            } catch (error) {
+                console.error('Error applying filters:', error);
+            }
+        }
+
+        async function resetFilters() {
+            document.getElementById('startDate').value = '';
+            document.getElementById('endDate').value = '';
+            document.getElementById('neighborhoodSelect').value = '';
+            document.getElementById('startHour').value = '0';
+            document.getElementById('endHour').value = '23';
+            document.getElementById('monthSelect').value = '';
+            document.getElementById('minDistance').value = '0';
+            document.getElementById('maxDistance').value = '50';
+            
+            updateRangeLabels();
+            currentFilters = {};
+            
+            await loadAllData();
+            await loadTripData();
+            
+            console.log('Filters reset');
+        }
+
+        function updateRangeLabels() {
+            document.getElementById('startHourLabel').textContent = `${document.getElementById('startHour').value}:00`;
+            document.getElementById('endHourLabel').textContent = `${document.getElementById('endHour').value}:00`;
+            document.getElementById('minDistanceLabel').textContent = `${document.getElementById('minDistance').value} km`;
+            document.getElementById('maxDistanceLabel').textContent = `${document.getElementById('maxDistance').value} km`;
+        }
+
+
+        function initializeParameterControls() {
+            loadParameterOptions();
+            
+            document.getElementById('applyFilters').addEventListener('click', applyFilters);
+            document.getElementById('resetFilters').addEventListener('click', resetFilters);
+            
+            ['startHour', 'endHour', 'minDistance', 'maxDistance'].forEach(id => {
+                document.getElementById(id).addEventListener('input', updateRangeLabels);
+            });
+        }
+
+        function initializeSidebar() {
+            // Sidebar is now always visible (not collapsable)
+            console.log('Sidebar initialized (always visible)');
+        }
+
+        // Note: Theme switching removed - using MapTiler Streets only
+
+        // Set view mode (2D bird's eye or 3D perspective)
+        function setViewMode(mode) {
+            currentViewMode = mode;
+            
+            // Update map toggle button text
+            document.getElementById('view-toggle-text').textContent = mode.toUpperCase();
+            
+            if (mode === '2d') {
+                // Bird's eye view - straight down
+                map.easeTo({
+                    pitch: 0,
+                    duration: 1000
+                });
+                console.log('Switched to 2D mode');
+                    } else {
+                // 3D perspective view
+                map.easeTo({
+                    pitch: 60,
+                    duration: 1000
+                });
+                console.log('Switched to 3D mode');
+            }
+            
+            // Update hexagon layers
+            updateDeckLayers();
+        }
+
+        // Toggle map info popup
+        function toggleMapInfo() {
+            const popup = document.getElementById('map-info-popup');
+            if (popup.style.display === 'none') {
+                popup.style.display = 'block';
+            } else {
+                popup.style.display = 'none';
+            }
+        }
+
+        // Zoom controls
+        function zoomIn() {
+            map.zoomIn({ duration: 300 });
+        }
+
+        function zoomOut() {
+            map.zoomOut({ duration: 300 });
+        }
+
+        // Toggle view mode (for map button)
+        function toggleViewMode() {
+            const newMode = currentViewMode === '2d' ? '3d' : '2d';
+            setViewMode(newMode);
+        }
+
+        function toggleLayers(layer) {
+            currentLayer = layer;
+            updateDeckLayers();
+            
+            document.querySelectorAll('.map-controls .map-btn').forEach(btn => {
+                const text = btn.textContent.toLowerCase();
+                if (text === 'both' || text === 'pickups' || text === 'dropoffs') {
+                    btn.classList.toggle('active', text === layer);
+                }
+            });
+        }
+
+        function resetCamera() {
+            map.flyTo({
+                center: [initialViewState.longitude, initialViewState.latitude],
+                zoom: initialViewState.zoom,
+                pitch: initialViewState.pitch,
+                bearing: initialViewState.bearing,
+                duration: 2000
+            });
+        }
+
+        // Preload critical data while splash screen is visible
+        let preloadedData = {
+            health: null,
+            h3Grid: null,
+            stats: null
+        };
+
+        // Start preloading immediately when page loads
+        (async function preloadCriticalData() {
+            try {
+                console.log('Preloading critical data...');
+                
+                // Authentication headers (Phase 2)
+                const authHeaders = {
+                    'X-API-Key': CONFIG.API_KEY
+                };
+                
+                // Load health check and H3 grid data in parallel (most important for map)
+                const [healthData, h3Data] = await Promise.all([
+                    fetch(`${API_BASE}/health`).then(r => r.json()).catch(() => null),
+                    fetch(`${API_BASE}/trips/h3-grid?resolution=9&includeGeometry=false`, {
+                        headers: authHeaders
+                    })
+                        .then(r => r.json())
+                        .then(data => data.success ? data.data : [])
+                        .catch(() => [])
+                ]);
+                
+                preloadedData.health = healthData;
+                preloadedData.h3Grid = h3Data;
+                
+                console.log('Critical data preloaded:', {
+                    health: !!healthData,
+                    h3GridCells: h3Data?.length || 0
+                });
+            } catch (error) {
+                console.error('Preload error:', error);
+            }
+        })();
+
+        // Splash screen functionality
+        document.getElementById('enter-btn').addEventListener('click', function() {
+            const splash = document.getElementById('splash-screen');
+            const mainContent = document.getElementById('main-content');
+            
+            // Fade out splash screen
+            splash.classList.add('fade-out');
+            
+            // After animation completes
+            setTimeout(() => {
+                splash.style.display = 'none';
+                mainContent.classList.remove('main-content-hidden');
+                mainContent.classList.add('main-content-visible');
+                
+                // Animate page sections with staggered timing
+                animatePageSections();
+                
+                // Initialize the application with preloaded data
+                initializeApp();
+            }, 800);
+        });
+
+        // Animate page sections uniformly
+        function animatePageSections() {
+            // Fade in all sections uniformly at the same time
+            const sections = document.querySelectorAll('.animate-on-enter');
+            
+            sections.forEach((section) => {
+                section.classList.add('animated-visible');
+            });
+        }
+    </script>
+</body>
+</html>
+

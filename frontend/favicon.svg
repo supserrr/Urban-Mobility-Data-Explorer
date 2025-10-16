@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <!-- Taxi cab icon with yellow/black theme -->
+  <defs>
+    <style>
+      .taxi-body { fill: #FFD700; stroke: #000; stroke-width: 2; }
+      .taxi-window { fill: #87CEEB; stroke: #000; stroke-width: 1.5; }
+      .taxi-wheel { fill: #333; stroke: #000; stroke-width: 1.5; }
+      .taxi-light { fill: #FF6B00; }
+      .taxi-sign { fill: #FFD700; stroke: #000; stroke-width: 1.5; }
+      .taxi-text { fill: #000; font-family: Arial, sans-serif; font-weight: bold; font-size: 8px; }
+    </style>
+  </defs>
+  
+  <!-- Taxi sign on top -->
+  <rect class="taxi-sign" x="24" y="8" width="16" height="6" rx="1"/>
+  <text class="taxi-text" x="32" y="12.5" text-anchor="middle">TAXI</text>
+  
+  <!-- Main car body -->
+  <rect class="taxi-body" x="12" y="28" width="40" height="18" rx="2"/>
+  
+  <!-- Car top/cabin -->
+  <path class="taxi-body" d="M 16 28 L 20 18 L 44 18 L 48 28 Z"/>
+  
+  <!-- Front windshield -->
+  <path class="taxi-window" d="M 18 26 L 21 20 L 29 20 L 29 26 Z"/>
+  
+  <!-- Rear windshield -->
+  <path class="taxi-window" d="M 35 26 L 35 20 L 43 20 L 46 26 Z"/>
+  
+  <!-- Side windows -->
+  <rect class="taxi-window" x="16" y="30" width="10" height="8" rx="1"/>
+  <rect class="taxi-window" x="38" y="30" width="10" height="8" rx="1"/>
+  
+  <!-- Headlights -->
+  <circle class="taxi-light" cx="52" cy="35" r="2"/>
+  <circle class="taxi-light" cx="52" cy="41" r="2"/>
+  
+  <!-- Wheels -->
+  <circle class="taxi-wheel" cx="20" cy="48" r="6"/>
+  <circle class="taxi-wheel" cx="44" cy="48" r="6"/>
+  
+  <!-- Wheel hubs -->
+  <circle fill="#666" cx="20" cy="48" r="3"/>
+  <circle fill="#666" cx="44" cy="48" r="3"/>
+  
+  <!-- Door line -->
+  <line x1="32" y1="28" x2="32" y2="46" stroke="#000" stroke-width="1.5"/>
+  
+  <!-- Bottom bumper -->
+  <rect fill="#333" x="10" y="46" width="44" height="2"/>
+  
+  <!-- Checkerboard pattern on side -->
+  <rect fill="#000" x="30" y="32" width="3" height="3"/>
+  <rect fill="#000" x="36" y="32" width="3" height="3"/>
+  <rect fill="#000" x="33" y="35" width="3" height="3"/>
+</svg>
+
