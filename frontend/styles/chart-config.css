@@ -1,0 +1,173 @@
+/**
+ * Chart.js Neo-Brutalist Configuration
+ * Global chart styling for neo-brutalist aesthetic
+ */
+
+/* Chart container backgrounds - white background for contrast */
+.chart-container {
+    position: relative;
+    background: #ffffff;
+    border: 4px solid #000000;
+    padding: 1.25rem;
+    box-shadow: 8px 8px 0 #000000;
+}
+
+.chart-container canvas {
+    background: #ffffff;
+}
+
+/* Chart wrapper for additional brutalist styling */
+.chart-wrapper {
+    position: relative;
+    width: 100%;
+    height: 100%;
+}
+
+/* Custom chart legend styling */
+.chartjs-legend {
+    font-family: 'Public Sans', sans-serif;
+    font-weight: 700;
+    text-transform: uppercase;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 3px solid #000000;
+}
+
+.chartjs-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+}
+
+.chartjs-legend-color {
+    width: 20px;
+    height: 20px;
+    border: 3px solid #000000;
+}
+
+/* Chart tooltips - brutalist style */
+.chartjs-tooltip {
+    background: #ffffff;
+    border: 4px solid #000000;
+    box-shadow: 6px 6px 0 #000000;
+    color: #000000;
+    font-family: 'Public Sans', sans-serif;
+    font-weight: 700;
+    padding: 1rem;
+}
+
+.chartjs-tooltip-title {
+    font-family: 'Lexend Mega', sans-serif;
+    font-weight: 900;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #000000;
+}
+
+.chartjs-tooltip-body {
+    font-weight: 700;
+}
+
+/* Chart card enhancements */
+.chart-card {
+    transition: all 0.15s cubic-bezier(0.77, 0, 0.18, 1);
+}
+
+.chart-card:hover .chart-container {
+    transform: translate(-2px, -2px);
+    box-shadow: 10px 10px 0 #000000;
+}
+
+/* Chart header styling */
+.chart-header {
+    border-bottom: 4px solid #000000;
+}
+
+/* Chart title styling */
+.chart-title {
+    text-transform: uppercase;
+    letter-spacing: -0.01em;
+}
+
+/* Chart controls styling */
+.chart-control-btn {
+    background: #ffffff;
+    border: 3px solid #000000;
+    box-shadow: 4px 4px 0 #000000;
+    color: #000000;
+    cursor: pointer;
+    font-family: 'Lexend Mega', sans-serif;
+    font-weight: 900;
+    padding: 0.5rem 0.875rem;
+    text-transform: uppercase;
+    transition: all 0.15s cubic-bezier(0.77, 0, 0.18, 1);
+}
+
+.chart-control-btn:hover {
+    background: #ffe600;
+    transform: translate(-2px, -2px);
+    box-shadow: 6px 6px 0 #000000;
+}
+
+.chart-control-btn.active {
+    background: #000000;
+    color: #ffffff;
+    transform: translate(-2px, -2px);
+    box-shadow: 6px 6px 0 #000000;
+}
+
+.chart-control-btn:active {
+    transform: translate(0, 0);
+    box-shadow: 2px 2px 0 #000000;
+}
+
+/* Enhanced grid styling for charts */
+canvas {
+    image-rendering: crisp-edges;
+    image-rendering: -moz-crisp-edges;
+    image-rendering: -webkit-optimize-contrast;
+}
+
+/* Loading state for charts */
+.chart-loading {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #ffe600;
+    border: 4px solid #000000;
+    box-shadow: 6px 6px 0 #000000;
+    padding: 1.5rem 2rem;
+    font-family: 'Lexend Mega', sans-serif;
+    font-weight: 900;
+    text-transform: uppercase;
+    z-index: 10;
+}
+
+/* Chart empty state */
+.chart-empty {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    font-family: 'Public Sans', sans-serif;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #000000;
+}
+
+.chart-empty-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+.chart-empty-text {
+    font-size: 1rem;
+}
+
